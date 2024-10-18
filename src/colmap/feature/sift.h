@@ -46,7 +46,7 @@ struct SiftExtractionOptions {
   std::string gpu_index = "-1";
 
   // Maximum image size, otherwise image will be down-scaled.
-  int max_image_size = 3200;
+  int max_image_size = 2560;
 
   // Maximum number of features to detect, keeping larger-scale features.
   int max_num_features = 8192;
@@ -68,7 +68,7 @@ struct SiftExtractionOptions {
 
   // Estimate affine shape of SIFT features in the form of oriented ellipses as
   // opposed to original SIFT which estimates oriented disks.
-  bool estimate_affine_shape = false;
+  bool estimate_affine_shape = true;
 
   // Maximum number of orientations per keypoint if not estimate_affine_shape.
   int max_num_orientations = 2;
@@ -87,7 +87,7 @@ struct SiftExtractionOptions {
   // outperform other SIFT variants and learned descriptors in "Comparative
   // Evaluation of Hand-Crafted and Learned Local Features", Schönberger,
   // Hardmeier, Sattler, Pollefeys, CVPR 2016.
-  bool domain_size_pooling = false;
+  bool domain_size_pooling = true;
   double dsp_min_scale = 1.0 / 6.0;
   double dsp_max_scale = 3.0;
   int dsp_num_scales = 10;

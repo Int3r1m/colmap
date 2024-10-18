@@ -59,10 +59,10 @@ struct ImageReaderOptions {
   std::vector<std::string> image_list;
 
   // Name of the camera model.
-  std::string camera_model = "SIMPLE_RADIAL";
+  std::string camera_model = "SPHERICAL";
 
   // Whether to use the same camera for all images.
-  bool single_camera = false;
+  bool single_camera = true;
 
   // Whether to use the same camera for all images in the same sub-folder.
   bool single_camera_per_folder = false;
