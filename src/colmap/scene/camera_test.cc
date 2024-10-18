@@ -253,6 +253,18 @@ TEST(Camera, CamFromImg) {
   EXPECT_EQ(camera.CamFromImg(Eigen::Vector2d(0.5, 0.5))(1), 0.0);
 }
 
+TEST(Camera, Cam3DFromImg) {
+  Camera camera;
+  EXPECT_THROW(camera.Cam3DFromImg(Eigen::Vector2d::Zero()), std::domain_error);
+  camera = Camera::CreateFromModelName(1, "SIMPLE_PINHOLE", 1.0, 1, 1);
+  EXPECT_EQ(camera.Cam3DFromImg(Eigen::Vector2d(0.0, 0.0))(0), -0.5);
+  EXPECT_EQ(camera.Cam3DFromImg(Eigen::Vector2d(0.0, 0.0))(1), -0.5);
+  EXPECT_EQ(camera.Cam3DFromImg(Eigen::Vector2d(0.0, 0.0))(2), 1.0);
+  EXPECT_EQ(camera.Cam3DFromImg(Eigen::Vector2d(0.5, 0.5))(0), 0.0);
+  EXPECT_EQ(camera.Cam3DFromImg(Eigen::Vector2d(0.5, 0.5))(1), 0.0);
+  EXPECT_EQ(camera.Cam3DFromImg(Eigen::Vector2d(0.5, 0.5))(2), 1.0);
+}
+
 TEST(Camera, CamFromImgThreshold) {
   Camera camera;
   EXPECT_THROW(camera.CamFromImgThreshold(0), std::domain_error);
@@ -274,6 +286,16 @@ TEST(Camera, ImgFromCam) {
   EXPECT_EQ(camera.ImgFromCam(Eigen::Vector2d(0.0, 0.0))(1), 0.5);
   EXPECT_EQ(camera.ImgFromCam(Eigen::Vector2d(-0.5, -0.5))(0), 0.0);
   EXPECT_EQ(camera.ImgFromCam(Eigen::Vector2d(-0.5, -0.5))(1), 0.0);
+}
+
+TEST(Camera, ImgFromCam3D) {
+  Camera camera;
+  EXPECT_THROW(camera.ImgFromCam3D(Eigen::Vector2d::Zero()), std::domain_error);
+  camera = Camera::CreateFromModelName(1, "SIMPLE_PINHOLE", 1.0, 1, 1);
+  EXPECT_EQ(camera.ImgFromCam3D(Eigen::Vector2d(0.0, 0.0, 1.0))(0), 0.5);
+  EXPECT_EQ(camera.ImgFromCam3D(Eigen::Vector2d(0.0, 0.0, 1.0))(1), 0.5);
+  EXPECT_EQ(camera.ImgFromCam3D(Eigen::Vector2d(-0.5, -0.5, 1.0))(0), 0.0);
+  EXPECT_EQ(camera.ImgFromCam3D(Eigen::Vector2d(-0.5, -0.5, 1.0))(1), 0.0);
 }
 
 TEST(Camera, Rescale) {

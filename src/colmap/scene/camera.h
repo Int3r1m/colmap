@@ -127,11 +127,17 @@ struct Camera {
   // Project point in image plane to world / infinity.
   inline Eigen::Vector2d CamFromImg(const Eigen::Vector2d& image_point) const;
 
+  // Project point in image plane to world / infinity.
+  inline Eigen::Vector3d Cam3DFromImg(const Eigen::Vector2d& image_point) const;
+
   // Convert pixel threshold in image plane to camera frame.
   inline double CamFromImgThreshold(double threshold) const;
 
   // Project point from camera frame to image plane.
   inline Eigen::Vector2d ImgFromCam(const Eigen::Vector2d& cam_point) const;
+
+  // Project point from camera frame to image plane.
+  inline Eigen::Vector2d ImgFromCam3D(const Eigen::Vector3d& cam_point) const;
 
   // Rescale camera dimensions and accordingly the focal length and
   // and the principal point.
@@ -242,12 +248,20 @@ Eigen::Vector2d Camera::CamFromImg(const Eigen::Vector2d& image_point) const {
   return CameraModelCamFromImg(model_id, params, image_point).hnormalized();
 }
 
+Eigen::Vector3d Camera::Cam3DFromImg(const Eigen::Vector2d& image_point) const {
+  return CameraModelCamFromImg(model_id, params, image_point);
+}
+
 double Camera::CamFromImgThreshold(const double threshold) const {
   return CameraModelCamFromImgThreshold(model_id, params, threshold);
 }
 
 Eigen::Vector2d Camera::ImgFromCam(const Eigen::Vector2d& cam_point) const {
   return CameraModelImgFromCam(model_id, params, cam_point.homogeneous());
+}
+
+Eigen::Vector2d Camera::ImgFromCam3D(const Eigen::Vector3d& cam_point) const {
+  return CameraModelImgFromCam(model_id, params, cam_point);
 }
 
 }  // namespace colmap
