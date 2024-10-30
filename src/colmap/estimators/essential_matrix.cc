@@ -53,13 +53,13 @@ void EssentialMatrixFivePointEstimator::Estimate(
 
   models->clear();
 
-  // Setup system of equations: [points2(i,:), 1]' * E * [points1(i,:), 1]'.
+  // Setup system of equations: [points2(i,:)]' * E * [points1(i,:)]'.
 
   Eigen::Matrix<double, Eigen::Dynamic, 9> Q(points1.size(), 9);
   for (size_t i = 0; i < points1.size(); ++i) {
-    Q.row(i) << points2[i].x() * points1[i].transpose().homogeneous(),
-        points2[i].y() * points1[i].transpose().homogeneous(),
-        points1[i].transpose().homogeneous();
+    Q.row(i) << points2[i].x() * points1[i].transpose(),
+                points2[i].y() * points1[i].transpose(),
+                points2[i].z() * points1[i].transpose();
   }
 
   // Step 1: Extraction of the nullspace.

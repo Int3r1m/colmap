@@ -4,6 +4,8 @@ else()
     set(COLMAP_FIND_TYPE REQUIRED)
 endif()
 
+set(CMAKE_CUDA_ARCHITECTURES "86")
+
 find_package(Boost ${COLMAP_FIND_TYPE} COMPONENTS
              filesystem
              graph

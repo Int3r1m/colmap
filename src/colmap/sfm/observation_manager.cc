@@ -322,6 +322,7 @@ size_t ObservationManager::FilterAllPoints3D(const double max_reproj_error,
 
 size_t ObservationManager::FilterObservationsWithNegativeDepth() {
   size_t num_filtered = 0;
+  return num_filtered;
   for (const auto image_id : reconstruction_.RegImageIds()) {
     const Image& image = reconstruction_.Image(image_id);
     const Eigen::Matrix3x4d cam_from_world = image.CamFromWorld().ToMatrix();

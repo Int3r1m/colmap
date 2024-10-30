@@ -165,8 +165,8 @@ double CalculateDepth(const Eigen::Matrix3x4d& cam_from_world,
 
 bool CheckCheirality(const Eigen::Matrix3d& R,
                      const Eigen::Vector3d& t,
-                     const std::vector<Eigen::Vector2d>& points1,
-                     const std::vector<Eigen::Vector2d>& points2,
+                     const std::vector<Eigen::Vector3d>& points1,
+                     const std::vector<Eigen::Vector3d>& points2,
                      std::vector<Eigen::Vector3d>* points3D) {
   THROW_CHECK_EQ(points1.size(), points2.size());
   const Eigen::Matrix3x4d proj_matrix1 = Eigen::Matrix3x4d::Identity();
@@ -179,12 +179,25 @@ bool CheckCheirality(const Eigen::Matrix3d& R,
   for (size_t i = 0; i < points1.size(); ++i) {
     const Eigen::Vector3d point3D =
         TriangulatePoint(proj_matrix1, proj_matrix2, points1[i], points2[i]);
-    const double depth1 = CalculateDepth(proj_matrix1, point3D);
-    if (depth1 > kMinDepth && depth1 < max_depth) {
-      const double depth2 = CalculateDepth(proj_matrix2, point3D);
-      if (depth2 > kMinDepth && depth2 < max_depth) {
-        points3D->push_back(point3D);
-      }
+    // check angle error 
+    const double angular_error1 = std::acos(points1[i].normalized().transpose() *
+                                            (proj_matrix1 * point3D.homogeneous()).normalized());
+    if (angular_error1 > M_PI/2) {
+      continue;
+    }
+
+    const double angular_error2 = std::acos(points2[i].normalized().transpose() *
+                                            (proj_matrix2 * point3D.homogeneous()).normalized());
+    if (angular_error2 > M_PI/2) {
+      continue;
+    }
+
+    double dist1 = (proj_matrix1 * point3D.homogeneous()).norm();
+    double dist2 = (proj_matrix2 * point3D.homogeneous()).norm();
+
+    if (dist1 > kMinDepth && dist1 < max_depth
+        && dist2 > kMinDepth && dist2 < max_depth) {
+      points3D->push_back(point3D);
     }
   }
   return !points3D->empty();

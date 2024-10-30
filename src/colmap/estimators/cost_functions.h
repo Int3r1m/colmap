@@ -293,11 +293,11 @@ class RigReprojErrorConstantRigCostFunction
 // and should be down-projected using `SphereManifold`.
 class SampsonErrorCostFunction {
  public:
-  SampsonErrorCostFunction(const Eigen::Vector2d& x1, const Eigen::Vector2d& x2)
-      : x1_(x1(0)), y1_(x1(1)), x2_(x2(0)), y2_(x2(1)) {}
+  SampsonErrorCostFunction(const Eigen::Vector3d& x1, const Eigen::Vector3d& x2)
+      : x1_(x1(0)), y1_(x1(1)), z1_(x1(2)), x2_(x2(0)), y2_(x2(1)), z2_(x2(2)) {}
 
-  static ceres::CostFunction* Create(const Eigen::Vector2d& x1,
-                                     const Eigen::Vector2d& x2) {
+  static ceres::CostFunction* Create(const Eigen::Vector3d& x1,
+                                     const Eigen::Vector3d& x2) {
     return (new ceres::AutoDiffCostFunction<SampsonErrorCostFunction, 1, 4, 3>(
         new SampsonErrorCostFunction(x1, x2)));
   }
@@ -312,23 +312,22 @@ class SampsonErrorCostFunction {
     // Matrix representation of the cross product t x R.
     Eigen::Matrix<T, 3, 3> t_x;
     t_x << T(0), -cam2_from_cam1_translation[2], cam2_from_cam1_translation[1],
-        cam2_from_cam1_translation[2], T(0), -cam2_from_cam1_translation[0],
-        -cam2_from_cam1_translation[1], cam2_from_cam1_translation[0], T(0);
+           cam2_from_cam1_translation[2], T(0), -cam2_from_cam1_translation[0],
+           -cam2_from_cam1_translation[1], cam2_from_cam1_translation[0], T(0);
 
     // Essential matrix.
     const Eigen::Matrix<T, 3, 3> E = t_x * R;
 
     // Homogeneous image coordinates.
-    const Eigen::Matrix<T, 3, 1> x1_h(T(x1_), T(y1_), T(1));
-    const Eigen::Matrix<T, 3, 1> x2_h(T(x2_), T(y2_), T(1));
+    const Eigen::Matrix<T, 3, 1> x1_h{T(x1_), T(y1_), T(z1_)};
+    const Eigen::Matrix<T, 3, 1> x2_h{T(x2_), T(y2_), T(z2_)};
 
     // Squared sampson error.
     const Eigen::Matrix<T, 3, 1> Ex1 = E * x1_h;
     const Eigen::Matrix<T, 3, 1> Etx2 = E.transpose() * x2_h;
     const T x2tEx1 = x2_h.transpose() * Ex1;
     residuals[0] = x2tEx1 * x2tEx1 /
-                   (Ex1(0) * Ex1(0) + Ex1(1) * Ex1(1) + Etx2(0) * Etx2(0) +
-                    Etx2(1) * Etx2(1));
+                   (Ex1.squaredNorm() + Etx2.squaredNorm());;
 
     return true;
   }
@@ -336,8 +335,10 @@ class SampsonErrorCostFunction {
  private:
   const double x1_;
   const double y1_;
+  const double z1_;
   const double x2_;
   const double y2_;
+  const double z2_;
 };
 
 template <typename T>

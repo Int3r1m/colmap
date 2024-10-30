@@ -91,6 +91,7 @@ enum class CameraModelId {
   kSimpleRadialFisheye = 8,
   kRadialFisheye = 9,
   kThinPrismFisheye = 10,
+  kSphere = 11,
 };
 
 #ifndef CAMERA_MODEL_DEFINITIONS
@@ -143,7 +144,8 @@ enum class CameraModelId {
   CAMERA_MODEL_CASE(OpenCVFisheyeCameraModel)       \
   CAMERA_MODEL_CASE(FullOpenCVCameraModel)          \
   CAMERA_MODEL_CASE(FOVCameraModel)                 \
-  CAMERA_MODEL_CASE(ThinPrismFisheyeCameraModel)
+  CAMERA_MODEL_CASE(ThinPrismFisheyeCameraModel)    \
+  CAMERA_MODEL_CASE(SphereCameraModel)
 #endif
 
 #ifndef CAMERA_MODEL_SWITCH_CASES
@@ -370,6 +372,20 @@ struct ThinPrismFisheyeCameraModel
     : public BaseCameraModel<ThinPrismFisheyeCameraModel> {
   CAMERA_MODEL_DEFINITIONS(
       CameraModelId::kThinPrismFisheye, "THIN_PRISM_FISHEYE", 2, 2, 8)
+};
+
+// Sphere camera model.
+//
+// No Distortion is assumed. Only focal length and principal point is modeled.
+//
+// Parameter list is expected in the following order:
+//
+//   f, cx, cy
+//
+struct SphereCameraModel
+    : public BaseCameraModel<SphereCameraModel> {
+  CAMERA_MODEL_DEFINITIONS(
+      CameraModelId::kSphere, "SPHERE", 1, 2, 0)
 };
 
 // Check whether camera model with given name or identifier exists.
@@ -1535,6 +1551,73 @@ void ThinPrismFisheyeCameraModel::Distortion(
   const T radial = k1 * r2 + k2 * r4 + k3 * r6 + k4 * r8;
   *du = u * radial + T(2) * p1 * uv + p2 * (r2 + T(2) * u2) + sx1 * r2;
   *dv = v * radial + T(2) * p2 * uv + p1 * (r2 + T(2) * v2) + sy1 * r2;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+// SphereCameraModel
+
+std::string SphereCameraModel::InitializeParamsInfo() {
+  return "f, cx, cy";
+}
+
+std::array<size_t, 1> SphereCameraModel::InitializeFocalLengthIdxs() {
+  return {0};
+}
+
+std::array<size_t, 2>
+SphereCameraModel::InitializePrincipalPointIdxs() {
+  return {1, 2};
+}
+
+std::array<size_t, 0> SphereCameraModel::InitializeExtraParamsIdxs() {
+  return {};
+}
+
+std::vector<double> SphereCameraModel::InitializeParams(
+    const double focal_length, const size_t width, const size_t height) {
+  return {height / M_PI, width / 2.0, height / 2.0};
+}
+
+template <typename T>
+void SphereCameraModel::ImgFromCam(
+    const T* params, T u, T v, T w, T* x, T* y) {
+  const T f = params[0];
+  const T c1 = params[1];
+  const T c2 = params[2];
+
+  // No Distortion
+
+  // Transform to image coordinates
+  T longitude = ceres::atan2(u, w);
+  T latitude = ceres::atan2(v, ceres::hypot(u, w));
+  *x = longitude * f + c1;
+  *y = latitude * f + c2;
+}
+
+template <typename T>
+void SphereCameraModel::CamFromImg(
+    const T* params, const T x, const T y, T* u, T* v, T* w) {
+  const T f = params[0];
+  const T c1 = params[1];
+  const T c2 = params[2];
+
+  T longitude = (x - c1) / f;
+  T latitude = (y - c2) / f;
+  *u = ceres::cos(latitude) * ceres::sin(longitude);
+  *v = ceres::sin(latitude);
+  *w = ceres::cos(latitude) * ceres::cos(longitude);
+}
+
+template <>
+template <typename T>
+T BaseCameraModel<SphereCameraModel>::CamFromImgThreshold(const T* params,
+                                                          const T threshold) {
+  T mean_focal_length = 0;
+  for (const size_t idx : SphereCameraModel::focal_length_idxs) {
+    mean_focal_length += params[idx];
+  }
+  mean_focal_length /= SphereCameraModel::focal_length_idxs.size();
+  return T(1.1244554237496478) * threshold / mean_focal_length;
 }
 
 ////////////////////////////////////////////////////////////////////////////////

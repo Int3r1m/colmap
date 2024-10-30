@@ -68,8 +68,10 @@ void TriangulationEstimator::Estimate(const std::vector<X_t>& point_data,
                                      point_data[0].point_normalized,
                                      point_data[1].point_normalized);
 
-    if (HasPointPositiveDepth(pose_data[0].proj_matrix, xyz) &&
-        HasPointPositiveDepth(pose_data[1].proj_matrix, xyz) &&
+    if ((pose_data[0].camera->model_id == CameraModelId::kSphere ||
+         HasPointPositiveDepth(pose_data[0].proj_matrix, xyz)) &&
+        (pose_data[1].camera->model_id == CameraModelId::kSphere ||
+         HasPointPositiveDepth(pose_data[1].proj_matrix, xyz)) &&
         CalculateTriangulationAngle(pose_data[0].proj_center,
                                     pose_data[1].proj_center,
                                     xyz) >= min_tri_angle_) {
@@ -82,7 +84,7 @@ void TriangulationEstimator::Estimate(const std::vector<X_t>& point_data,
 
     std::vector<Eigen::Matrix3x4d> proj_matrices;
     proj_matrices.reserve(point_data.size());
-    std::vector<Eigen::Vector2d> points;
+    std::vector<Eigen::Vector3d> points;
     points.reserve(point_data.size());
     for (size_t i = 0; i < point_data.size(); ++i) {
       proj_matrices.push_back(pose_data[i].proj_matrix);
@@ -93,7 +95,8 @@ void TriangulationEstimator::Estimate(const std::vector<X_t>& point_data,
 
     // Check for cheirality constraint.
     for (const auto& pose : pose_data) {
-      if (!HasPointPositiveDepth(pose.proj_matrix, xyz)) {
+      if (pose.camera->model_id != CameraModelId::kSphere &&
+          !HasPointPositiveDepth(pose.proj_matrix, xyz)) {
         return;
       }
     }
