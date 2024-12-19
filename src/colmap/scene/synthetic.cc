@@ -221,7 +221,7 @@ void SynthesizeDataset(const SyntheticDatasetOptions& options,
     for (auto& point3D : reconstruction->Points3D()) {
       Point2D point2D;
       point2D.xy = camera.ImgFromCam(
-          (image.CamFromWorld() * point3D.second.xyz).hnormalized());
+          (image.CamFromWorld() * point3D.second.xyz).normalized());
       if (options.point2D_stddev > 0) {
         const Eigen::Vector2d noise(
             RandomGaussian<double>(0, options.point2D_stddev),

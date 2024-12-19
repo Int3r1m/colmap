@@ -25,7 +25,7 @@ py::typing::Optional<py::dict> PyEstimateTriangulation(
   py::gil_scoped_release release;
   Eigen::Vector3d xyz;
   std::vector<char> inlier_mask;
-  const bool success = EstimateTriangulation(
+  const bool success = EstimateTriangulationPro(
       options, points, cams_from_world, cameras, &inlier_mask, &xyz);
 
   py::gil_scoped_acquire acquire;

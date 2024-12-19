@@ -127,8 +127,8 @@ bool EstimateAbsolutePose(const AbsolutePoseEstimationOptions& options,
 //
 // @return                     Number of RANSAC inliers.
 size_t EstimateRelativePose(const RANSACOptions& ransac_options,
-                            const std::vector<Eigen::Vector2d>& points1,
-                            const std::vector<Eigen::Vector2d>& points2,
+                            const std::vector<Eigen::Vector3d>& points1,
+                            const std::vector<Eigen::Vector3d>& points2,
                             Rigid3d* cam2_from_cam1);
 
 // Refine absolute pose (optionally focal length) from 2D-3D correspondences.
@@ -173,8 +173,8 @@ bool RefineAbsolutePose(const AbsolutePoseRefinementOptions& options,
 //
 // @return                 Flag indicating if solution is usable.
 bool RefineRelativePose(const ceres::Solver::Options& options,
-                        const std::vector<Eigen::Vector2d>& points1,
-                        const std::vector<Eigen::Vector2d>& points2,
+                        const std::vector<Eigen::Vector3d>& points1,
+                        const std::vector<Eigen::Vector3d>& points2,
                         Rigid3d* cam_from_world);
 
 // Refine essential matrix.
@@ -190,8 +190,8 @@ bool RefineRelativePose(const ceres::Solver::Options& options,
 //
 // @return                 Flag indicating if solution is usable.
 bool RefineEssentialMatrix(const ceres::Solver::Options& options,
-                           const std::vector<Eigen::Vector2d>& points1,
-                           const std::vector<Eigen::Vector2d>& points2,
+                           const std::vector<Eigen::Vector3d>& points1,
+                           const std::vector<Eigen::Vector3d>& points2,
                            const std::vector<char>& inlier_mask,
                            Eigen::Matrix3d* E);
 

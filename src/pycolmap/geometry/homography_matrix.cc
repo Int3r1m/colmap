@@ -17,8 +17,8 @@ py::dict PyPoseFromHomographyMatrix(
     const Eigen::Matrix3d& H,
     const Eigen::Matrix3d& K1,
     const Eigen::Matrix3d& K2,
-    const std::vector<Eigen::Vector2d>& points1,
-    const std::vector<Eigen::Vector2d>& points2) {
+    const std::vector<Eigen::Vector3d>& points1,
+    const std::vector<Eigen::Vector3d>& points2) {
   py::gil_scoped_release release;
   Rigid3d cam2_from_cam1;
   Eigen::Vector3d normal;

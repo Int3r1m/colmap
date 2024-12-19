@@ -4,6 +4,8 @@ else()
     set(COLMAP_FIND_TYPE REQUIRED)
 endif()
 
+set(CMAKE_CUDA_ARCHITECTURES "86")
+
 if(CMAKE_VERSION VERSION_GREATER_EQUAL "3.30")
     cmake_policy(SET CMP0167 NEW)
 endif()
