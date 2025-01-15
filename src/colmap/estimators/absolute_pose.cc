@@ -49,7 +49,7 @@ void P3PEstimator::Estimate(const std::vector<X_t>& points2D,
 
   thread_local std::vector<Eigen::Vector3d> rays(3);
   for (int i = 0; i < 3; ++i) {
-    rays[i] = points2D[i].homogeneous().normalized();
+    rays[i] = points2D[i].normalized();
   }
 
   std::vector<poselib::CameraPose> poses;
@@ -138,7 +138,7 @@ void EPNPEstimator::Residuals(const std::vector<X_t>& points2D,
       points2D, points3D, cam_from_world, residuals);
 }
 
-bool EPNPEstimator::ComputePose(const std::vector<Eigen::Vector2d>& points2D,
+bool EPNPEstimator::ComputePose(const std::vector<Eigen::Vector3d>& points2D,
                                 const std::vector<Eigen::Vector3d>& points3D,
                                 Eigen::Matrix3x4d* cam_from_world) {
   points2D_ = &points2D;
@@ -244,16 +244,20 @@ bool EPNPEstimator::ComputeBarycentricCoordinates() {
 }
 
 Eigen::Matrix<double, Eigen::Dynamic, 12> EPNPEstimator::ComputeM() {
-  Eigen::Matrix<double, Eigen::Dynamic, 12> M(2 * points2D_->size(), 12);
+  Eigen::Matrix<double, Eigen::Dynamic, 12> M(3 * points2D_->size(), 12);
   for (size_t i = 0; i < points3D_->size(); ++i) {
     for (size_t j = 0; j < 4; ++j) {
-      M(2 * i, 3 * j) = alphas_[i][j];
-      M(2 * i, 3 * j + 1) = 0.0;
-      M(2 * i, 3 * j + 2) = -alphas_[i][j] * (*points2D_)[i].x();
+      M(3 * i, 3 * j) = 0.0;
+      M(3 * i, 3 * j + 1) = -alphas_[i][j] * (*points2D_)[i].z();
+      M(3 * i, 3 * j + 2) = alphas_[i][j] * (*points2D_)[i].y();
 
-      M(2 * i + 1, 3 * j) = 0.0;
-      M(2 * i + 1, 3 * j + 1) = alphas_[i][j];
-      M(2 * i + 1, 3 * j + 2) = -alphas_[i][j] * (*points2D_)[i].y();
+      M(3 * i + 1, 3 * j) = alphas_[i][j] * (*points2D_)[i].z();
+      M(3 * i + 1, 3 * j + 1) = 0.0;
+      M(3 * i + 1, 3 * j + 2) = -alphas_[i][j] * (*points2D_)[i].x();
+
+      M(3 * i + 2, 3 * j) = -alphas_[i][j] * (*points2D_)[i].y();
+      M(3 * i + 2, 3 * j + 1) = alphas_[i][j] * (*points2D_)[i].x();
+      M(3 * i + 2, 3 * j + 2) = 0.0;
     }
   }
   return M;

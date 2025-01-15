@@ -110,8 +110,8 @@ void BindCeresTypes(py::module& m) {
       py::enum_<ceres::DenseLinearAlgebraLibraryType>(
           m, "DenseLinearAlgebraLibraryType", py::module_local())
           .value("EIGEN", ceres::DenseLinearAlgebraLibraryType::EIGEN)
-          .value("LAPACK", ceres::DenseLinearAlgebraLibraryType::LAPACK)
-          .value("CUDA", ceres::DenseLinearAlgebraLibraryType::CUDA);
+          .value("LAPACK", ceres::DenseLinearAlgebraLibraryType::LAPACK);
+        //   .value("CUDA", ceres::DenseLinearAlgebraLibraryType::CUDA);
   AddStringToEnumConstructor(dlalt);
 
   auto slalt =

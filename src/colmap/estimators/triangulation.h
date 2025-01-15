@@ -58,12 +58,12 @@ class TriangulationEstimator {
 
   struct PointData {
     PointData() {}
-    PointData(const Eigen::Vector2d& point, const Eigen::Vector2d& point_N)
+    PointData(const Eigen::Vector2d& point, const Eigen::Vector3d& point_N)
         : point(point), point_normalized(point_N) {}
     // Image observation in pixels. Only needs to be set for REPROJECTION_ERROR.
     Eigen::Vector2d point;
     // Normalized image observation. Must always be set.
-    Eigen::Vector2d point_normalized;
+    Eigen::Vector3d point_normalized;
   };
 
   struct PoseData {
@@ -153,5 +153,16 @@ bool EstimateTriangulation(const EstimateTriangulationOptions& options,
                            const std::vector<Camera const*>& cameras,
                            std::vector<char>* inlier_mask,
                            Eigen::Vector3d* xyz);
+
+// Robustly estimate 3D point from observations in multiple views using IGG
+// and a subsequent non-linear refinement using all inliers. Returns true
+// if the estimated number of inliers has more than two views.
+bool EstimateTriangulationPro(
+    const EstimateTriangulationOptions& options,
+    const std::vector<Eigen::Vector2d>& points,
+    const std::vector<Rigid3d const*>& cams_from_world,
+    const std::vector<Camera const*>& cameras,
+    std::vector<char>* inlier_mask,
+    Eigen::Vector3d* xyz);
 
 }  // namespace colmap

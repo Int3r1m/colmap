@@ -82,19 +82,20 @@ namespace colmap {
 
 MAKE_ENUM_CLASS_OVERLOAD_STREAM(CameraModelId,
                                 -1,
-                                kInvalid,                // = -1
-                                kSimplePinhole,          // = 0
-                                kPinhole,                // = 1
-                                kSimpleRadial,           // = 2
-                                kRadial,                 // = 3
-                                kOpenCV,                 // = 4
-                                kOpenCVFisheye,          // = 5
-                                kFullOpenCV,             // = 6
-                                kFOV,                    // = 7
-                                kSimpleRadialFisheye,    // = 8
-                                kRadialFisheye,          // = 9
-                                kThinPrismFisheye,       // = 10
-                                kRadTanThinPrismFisheye  // = 11
+                                kInvalid,                 // = -1
+                                kSimplePinhole,           // = 0
+                                kPinhole,                 // = 1
+                                kSimpleRadial,            // = 2
+                                kRadial,                  // = 3
+                                kOpenCV,                  // = 4
+                                kOpenCVFisheye,           // = 5
+                                kFullOpenCV,              // = 6
+                                kFOV,                     // = 7
+                                kSimpleRadialFisheye,     // = 8
+                                kRadialFisheye,           // = 9
+                                kThinPrismFisheye,        // = 10
+                                kRadTanThinPrismFisheye,  // = 11
+                                kSpherical                // = 12
 );
 
 #ifndef CAMERA_MODEL_DEFINITIONS
@@ -152,7 +153,8 @@ MAKE_ENUM_CLASS_OVERLOAD_STREAM(CameraModelId,
   CAMERA_MODEL_CASE(FullOpenCVCameraModel)          \
   CAMERA_MODEL_CASE(FOVCameraModel)                 \
   CAMERA_MODEL_CASE(ThinPrismFisheyeCameraModel)    \
-  CAMERA_MODEL_CASE(RadTanThinPrismFisheyeModel)
+  CAMERA_MODEL_CASE(RadTanThinPrismFisheyeModel)    \
+  CAMERA_MODEL_CASE(SphericalCameraModel)
 #endif
 
 #ifndef CAMERA_MODEL_SWITCH_CASES
@@ -453,6 +455,18 @@ struct RadTanThinPrismFisheyeModel
                            2,
                            12)
   FISHEYE_CAMERA_MODEL_DEFINITIONS
+};
+
+// Spherical camera model.
+//
+// No Distortion is assumed. Only focal length and principal point is modeled.
+//
+// Parameter list is expected in the following order:
+//
+//   f, cx, cy
+//
+struct SphericalCameraModel : public BaseCameraModel<SphericalCameraModel> {
+  CAMERA_MODEL_DEFINITIONS(CameraModelId::kSpherical, "SPHERICAL", 1, 2, 0)
 };
 
 // Check whether camera model with given name or identifier exists.
@@ -1758,6 +1772,71 @@ void RadTanThinPrismFisheyeModel::Distortion(
   *du = x_distorted - u;
   *dv = y_distorted - v;
 }
+
+////////////////////////////////////////////////////////////////////////////////
+// SphericalCameraModel
+
+std::string SphericalCameraModel::InitializeParamsInfo() { return "f, cx, cy"; }
+
+std::array<size_t, 1> SphericalCameraModel::InitializeFocalLengthIdxs() {
+  return {0};
+}
+
+std::array<size_t, 2> SphericalCameraModel::InitializePrincipalPointIdxs() {
+  return {1, 2};
+}
+
+std::array<size_t, 0> SphericalCameraModel::InitializeExtraParamsIdxs() {
+  return {};
+}
+
+std::vector<double> SphericalCameraModel::InitializeParams(
+    const double focal_length, const size_t width, const size_t height) {
+  return {height / M_PI, width / 2.0, height / 2.0};
+}
+
+template <typename T>
+void SphericalCameraModel::ImgFromCam(
+    const T* params, T u, T v, T w, T* x, T* y) {
+  const T f = params[0];
+  const T c1 = params[1];
+  const T c2 = params[2];
+
+  // No Distortion
+
+  // Transform to image coordinates
+  const T longitude = ceres::atan2(u, w);
+  const T latitude = ceres::atan2(v, ceres::hypot(u, w));
+  *x = longitude * f + c1;
+  *y = latitude * f + c2;
+}
+
+void SphericalCameraModel::CamFromImg(
+    const double* params, double x, double y, double* u, double* v, double* w) {
+  const double f = params[0];
+  const double c1 = params[1];
+  const double c2 = params[2];
+
+  const double longitude = (x - c1) / f;
+  const double latitude = (y - c2) / f;
+  *u = ceres::cos(latitude) * ceres::sin(longitude);
+  *v = ceres::sin(latitude);
+  *w = ceres::cos(latitude) * ceres::cos(longitude);
+}
+
+template <>
+template <typename T>
+T BaseCameraModel<SphericalCameraModel>::CamFromImgThreshold(
+    const T* params, const T threshold) {
+  T mean_focal_length = 0;
+  for (const size_t idx : SphericalCameraModel::focal_length_idxs) {
+    mean_focal_length += params[idx];
+  }
+  mean_focal_length /= SphericalCameraModel::focal_length_idxs.size();
+  return T(1.1244554237496478) * threshold / mean_focal_length;
+}
+
+////////////////////////////////////////////////////////////////////////////////
 
 Eigen::Vector2d CameraModelImgFromCam(const CameraModelId model_id,
                                       const std::vector<double>& params,

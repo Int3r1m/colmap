@@ -110,7 +110,7 @@ void BindCamera(py::module& m) {
           "cam_from_img",
           [](const Camera& self,
              const py::EigenDRef<const Eigen::MatrixX2d>& image_points) {
-            std::vector<Eigen::Vector2d> world_points(image_points.rows());
+            std::vector<Eigen::Vector3d> world_points(image_points.rows());
             for (size_t idx = 0; idx < image_points.rows(); ++idx) {
               world_points[idx] = self.CamFromImg(image_points.row(idx));
             }
@@ -120,7 +120,7 @@ void BindCamera(py::module& m) {
       .def(
           "cam_from_img",
           [](const Camera& self, const Point2DVector& image_points) {
-            std::vector<Eigen::Vector2d> world_points(image_points.size());
+            std::vector<Eigen::Vector3d> world_points(image_points.size());
             for (size_t idx = 0; idx < image_points.size(); ++idx) {
               world_points[idx] = self.CamFromImg(image_points[idx].xy);
             }
@@ -136,7 +136,7 @@ void BindCamera(py::module& m) {
       .def(
           "img_from_cam",
           [](const Camera& self,
-             const py::EigenDRef<const Eigen::MatrixX2d>& world_points) {
+             const py::EigenDRef<const Eigen::MatrixX3d>& world_points) {
             std::vector<Eigen::Vector2d> image_points(world_points.rows());
             for (size_t idx = 0; idx < world_points.rows(); ++idx) {
               image_points[idx] = self.ImgFromCam(world_points.row(idx));
@@ -152,16 +152,16 @@ void BindCamera(py::module& m) {
                 world_points.rowwise().hnormalized());
           },
           "Project list of points from world / infinity to image plane.")
-      .def(
-          "img_from_cam",
-          [](const Camera& self, const Point2DVector& world_points) {
-            std::vector<Eigen::Vector2d> image_points(world_points.size());
-            for (size_t idx = 0; idx < world_points.size(); ++idx) {
-              image_points[idx] = self.ImgFromCam(world_points[idx].xy);
-            }
-            return image_points;
-          },
-          "Project list of points from world / infinity to image plane.")
+     //  .def(
+     //      "img_from_cam",
+     //      [](const Camera& self, const Point2DVector& world_points) {
+     //        std::vector<Eigen::Vector2d> image_points(world_points.size());
+     //        for (size_t idx = 0; idx < world_points.size(); ++idx) {
+     //          image_points[idx] = self.ImgFromCam(world_points[idx].xy);
+     //        }
+     //        return image_points;
+     //      },
+     //      "Project list of points from world / infinity to image plane.")
       .def("rescale",
            py::overload_cast<size_t, size_t>(&Camera::Rescale),
            "Rescale camera dimensions to (width_height) and accordingly the "

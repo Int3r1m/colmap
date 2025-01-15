@@ -105,7 +105,9 @@ bool HierarchicalPipeline::Options::Check() const {
   CHECK_OPTION_GT(init_num_trials, -1);
   CHECK_OPTION_GE(num_workers, -1);
   clustering_options.Check();
-  THROW_CHECK_EQ(clustering_options.branching, 2);
+  if (clustering_options.is_hierarchical) {
+    THROW_CHECK_EQ(clustering_options.branching, 2);
+  }
   incremental_options.Check();
   return true;
 }

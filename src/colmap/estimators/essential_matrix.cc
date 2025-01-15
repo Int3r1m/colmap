@@ -53,13 +53,13 @@ void EssentialMatrixFivePointEstimator::Estimate(
 
   models->clear();
 
-  // Setup system of equations: [points2(i,:), 1]' * E * [points1(i,:), 1]'.
+  // Setup system of equations: [points2(i,:)]' * E * [points1(i,:)]'.
 
   Eigen::Matrix<double, Eigen::Dynamic, 9> Q(points1.size(), 9);
   for (size_t i = 0; i < points1.size(); ++i) {
-    Q.row(i) << points2[i].x() * points1[i].transpose().homogeneous(),
-        points2[i].y() * points1[i].transpose().homogeneous(),
-        points1[i].transpose().homogeneous();
+    Q.row(i) << points2[i].x() * points1[i].transpose(),
+        points2[i].y() * points1[i].transpose(),
+        points2[i].z() * points1[i].transpose();
   }
 
   // Step 1: Extraction of the nullspace.
@@ -155,66 +155,66 @@ void EssentialMatrixFivePointEstimator::Residuals(
   ComputeSquaredSampsonError(points1, points2, E, residuals);
 }
 
-void EssentialMatrixEightPointEstimator::Estimate(
-    const std::vector<X_t>& points1,
-    const std::vector<Y_t>& points2,
-    std::vector<M_t>* models) {
-  THROW_CHECK_EQ(points1.size(), points2.size());
-  THROW_CHECK_GE(points1.size(), 8);
-  THROW_CHECK(models != nullptr);
+// void EssentialMatrixEightPointEstimator::Estimate(
+//     const std::vector<X_t>& points1,
+//     const std::vector<Y_t>& points2,
+//     std::vector<M_t>* models) {
+//   THROW_CHECK_EQ(points1.size(), points2.size());
+//   THROW_CHECK_GE(points1.size(), 8);
+//   THROW_CHECK(models != nullptr);
 
-  models->clear();
+//   models->clear();
 
-  // Center and normalize image points for better numerical stability.
-  std::vector<X_t> normed_points1;
-  std::vector<Y_t> normed_points2;
-  Eigen::Matrix3d normed_from_orig1;
-  Eigen::Matrix3d normed_from_orig2;
-  CenterAndNormalizeImagePoints(points1, &normed_points1, &normed_from_orig1);
-  CenterAndNormalizeImagePoints(points2, &normed_points2, &normed_from_orig2);
+//   // Center and normalize image points for better numerical stability.
+//   std::vector<X_t> normed_points1;
+//   std::vector<Y_t> normed_points2;
+//   Eigen::Matrix3d normed_from_orig1;
+//   Eigen::Matrix3d normed_from_orig2;
+//   CenterAndNormalizeImagePoints(points1, &normed_points1, &normed_from_orig1);
+//   CenterAndNormalizeImagePoints(points2, &normed_points2, &normed_from_orig2);
 
-  // Setup homogeneous linear equation as x2' * F * x1 = 0.
-  Eigen::Matrix<double, Eigen::Dynamic, 9> A(points1.size(), 9);
-  for (size_t i = 0; i < points1.size(); ++i) {
-    A.row(i) << normed_points2[i].x() *
-                    normed_points1[i].transpose().homogeneous(),
-        normed_points2[i].y() * normed_points1[i].transpose().homogeneous(),
-        normed_points1[i].transpose().homogeneous();
-  }
+//   // Setup homogeneous linear equation as x2' * F * x1 = 0.
+//   Eigen::Matrix<double, Eigen::Dynamic, 9> A(points1.size(), 9);
+//   for (size_t i = 0; i < points1.size(); ++i) {
+//     A.row(i) << normed_points2[i].x() *
+//                     normed_points1[i].transpose().homogeneous(),
+//         normed_points2[i].y() * normed_points1[i].transpose().homogeneous(),
+//         normed_points1[i].transpose().homogeneous();
+//   }
 
-  // Solve for the nullspace of the constraint matrix.
-  Eigen::Matrix3d Q;
-  if (points1.size() == 8) {
-    Eigen::Matrix<double, 9, 9> QQ =
-        A.transpose().householderQr().householderQ();
-    Q = Eigen::Map<const Eigen::Matrix<double, 3, 3, Eigen::RowMajor>>(
-        QQ.col(8).data());
-  } else {
-    Eigen::JacobiSVD<Eigen::Matrix<double, Eigen::Dynamic, 9>> svd(
-        A, Eigen::ComputeFullV);
-    Q = Eigen::Map<const Eigen::Matrix<double, 3, 3, Eigen::RowMajor>>(
-        svd.matrixV().col(8).data());
-  }
+//   // Solve for the nullspace of the constraint matrix.
+//   Eigen::Matrix3d Q;
+//   if (points1.size() == 8) {
+//     Eigen::Matrix<double, 9, 9> QQ =
+//         A.transpose().householderQr().householderQ();
+//     Q = Eigen::Map<const Eigen::Matrix<double, 3, 3, Eigen::RowMajor>>(
+//         QQ.col(8).data());
+//   } else {
+//     Eigen::JacobiSVD<Eigen::Matrix<double, Eigen::Dynamic, 9>> svd(
+//         A, Eigen::ComputeFullV);
+//     Q = Eigen::Map<const Eigen::Matrix<double, 3, 3, Eigen::RowMajor>>(
+//         svd.matrixV().col(8).data());
+//   }
 
-  // Enforcing the internal constraint that two singular values must be non-zero
-  // and one must be zero.
-  Eigen::JacobiSVD<Eigen::Matrix3d> svd(
-      Q, Eigen::ComputeFullU | Eigen::ComputeFullV);
-  Eigen::Vector3d singular_values = svd.singularValues();
-  singular_values(2) = 0.0;
-  const Eigen::Matrix3d E =
-      svd.matrixU() * singular_values.asDiagonal() * svd.matrixV().transpose();
+//   // Enforcing the internal constraint that two singular values must be non-zero
+//   // and one must be zero.
+//   Eigen::JacobiSVD<Eigen::Matrix3d> svd(
+//       Q, Eigen::ComputeFullU | Eigen::ComputeFullV);
+//   Eigen::Vector3d singular_values = svd.singularValues();
+//   singular_values(2) = 0.0;
+//   const Eigen::Matrix3d E =
+//       svd.matrixU() * singular_values.asDiagonal() * svd.matrixV().transpose();
 
-  models->resize(1);
-  (*models)[0] = normed_from_orig2.transpose() * E * normed_from_orig1;
-}
+//   models->resize(1);
+//   (*models)[0] = normed_from_orig2.transpose() * E * normed_from_orig1;
+// }
 
-void EssentialMatrixEightPointEstimator::Residuals(
-    const std::vector<X_t>& points1,
-    const std::vector<Y_t>& points2,
-    const M_t& E,
-    std::vector<double>* residuals) {
-  ComputeSquaredSampsonError(points1, points2, E, residuals);
-}
+// void EssentialMatrixEightPointEstimator::Residuals(
+//     const std::vector<X_t>& points1,
+//     const std::vector<Y_t>& points2,
+//     const M_t& E,
+//     std::vector<double>* residuals) {
+//   ComputeSquaredSampsonError(points1, points2, E, residuals);
+// }
 
 }  // namespace colmap

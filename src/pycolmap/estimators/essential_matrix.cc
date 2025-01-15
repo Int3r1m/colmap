@@ -30,8 +30,8 @@ py::typing::Optional<py::dict> PyEstimateAndDecomposeEssentialMatrix(
   THROW_CHECK_EQ(points2D1.size(), points2D2.size());
   const size_t num_points2D = points2D1.size();
 
-  std::vector<Eigen::Vector2d> cam_points2D1(num_points2D);
-  std::vector<Eigen::Vector2d> cam_points2D2(num_points2D);
+  std::vector<Eigen::Vector3d> cam_points2D1(num_points2D);
+  std::vector<Eigen::Vector3d> cam_points2D2(num_points2D);
   for (size_t point2D_idx = 0; point2D_idx < num_points2D; ++point2D_idx) {
     cam_points2D1[point2D_idx] = camera1.CamFromImg(points2D1[point2D_idx]);
     cam_points2D2[point2D_idx] = camera2.CamFromImg(points2D2[point2D_idx]);
@@ -54,9 +54,9 @@ py::typing::Optional<py::dict> PyEstimateAndDecomposeEssentialMatrix(
   }
 
   // Pose from essential matrix.
-  std::vector<Eigen::Vector2d> inlier_cam_points2D1;
+  std::vector<Eigen::Vector3d> inlier_cam_points2D1;
   inlier_cam_points2D1.reserve(inlier_cam_points2D1.size());
-  std::vector<Eigen::Vector2d> inlier_cam_points2D2;
+  std::vector<Eigen::Vector3d> inlier_cam_points2D2;
   inlier_cam_points2D1.reserve(inlier_cam_points2D2.size());
   for (size_t point2D_idx = 0; point2D_idx < num_points2D; ++point2D_idx) {
     if (report.inlier_mask[point2D_idx]) {

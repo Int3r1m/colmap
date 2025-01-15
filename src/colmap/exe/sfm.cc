@@ -332,6 +332,10 @@ int RunHierarchicalMapper(int argc, char** argv) {
   options.AddRequiredOption("image_path", &mapper_options.image_path);
   options.AddRequiredOption("output_path", &output_path);
   options.AddDefaultOption("num_workers", &mapper_options.num_workers);
+  options.AddDefaultOption("is_hierarchical",
+                           &mapper_options.clustering_options.is_hierarchical);
+  options.AddDefaultOption("branching",
+                           &mapper_options.clustering_options.branching);
   options.AddDefaultOption("image_overlap",
                            &mapper_options.clustering_options.image_overlap);
   options.AddDefaultOption(

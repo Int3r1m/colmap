@@ -61,7 +61,7 @@ bool TriangulateTrack(
     options_.ransac_options.min_num_trials = NChooseK(points.size(), 2);
   }
 
-  return EstimateTriangulation(
+  return EstimateTriangulationPro(
       options_, points, cams_from_world, cameras, &inlier_mask, &xyz);
 }
 

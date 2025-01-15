@@ -102,8 +102,8 @@ Rigid3d InterpolateCameraPoses(const Rigid3d& cam_from_world1,
 // @param points2         Second set of corresponding points.
 // @param points3D        Points that lie in front of both cameras.
 bool CheckCheirality(const Rigid3d& cam2_from_cam1,
-                     const std::vector<Eigen::Vector2d>& points1,
-                     const std::vector<Eigen::Vector2d>& points2,
+                     const std::vector<Eigen::Vector3d>& points1,
+                     const std::vector<Eigen::Vector3d>& points2,
                      std::vector<Eigen::Vector3d>* points3D);
 
 Rigid3d TransformCameraWorld(const Sim3d& new_from_old_world,

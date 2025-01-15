@@ -61,8 +61,8 @@ void DecomposeEssentialMatrix(const Eigen::Matrix3d& E,
 }
 
 void PoseFromEssentialMatrix(const Eigen::Matrix3d& E,
-                             const std::vector<Eigen::Vector2d>& points1,
-                             const std::vector<Eigen::Vector2d>& points2,
+                             const std::vector<Eigen::Vector3d>& points1,
+                             const std::vector<Eigen::Vector3d>& points2,
                              Rigid3d* cam2_from_cam1,
                              std::vector<Eigen::Vector3d>* points3D) {
   THROW_CHECK_EQ(points1.size(), points2.size());
@@ -98,25 +98,22 @@ Eigen::Matrix3d EssentialMatrixFromPose(const Rigid3d& cam2_from_cam1) {
 }
 
 void FindOptimalImageObservations(const Eigen::Matrix3d& E,
-                                  const Eigen::Vector2d& point1,
-                                  const Eigen::Vector2d& point2,
-                                  Eigen::Vector2d* optimal_point1,
-                                  Eigen::Vector2d* optimal_point2) {
-  const Eigen::Vector3d& point1_homogeneous = point1.homogeneous();
-  const Eigen::Vector3d& point2_homogeneous = point2.homogeneous();
-
+                                  const Eigen::Vector3d& point1,
+                                  const Eigen::Vector3d& point2,
+                                  Eigen::Vector3d* optimal_point1,
+                                  Eigen::Vector3d* optimal_point2) {
   Eigen::Matrix<double, 2, 3> S;
   S << 1, 0, 0, 0, 1, 0;
 
   // Epipolar lines.
-  Eigen::Vector2d n1 = S * E * point2_homogeneous;
-  Eigen::Vector2d n2 = S * E.transpose() * point1_homogeneous;
+  Eigen::Vector2d n1 = S * E * point2;
+  Eigen::Vector2d n2 = S * E.transpose() * point1;
 
   const Eigen::Matrix2d E_tilde = E.block<2, 2>(0, 0);
 
   const double a = n1.transpose() * E_tilde * n2;
   const double b = (n1.squaredNorm() + n2.squaredNorm()) / 2.0;
-  const double c = point1_homogeneous.transpose() * E * point2_homogeneous;
+  const double c = point1.transpose() * E * point2;
   const double d = std::sqrt(b * b - a * c);
   double lambda = c / (b + d);
 
@@ -128,10 +125,8 @@ void FindOptimalImageObservations(const Eigen::Matrix3d& E,
 
   lambda *= (2.0 * d) / (n1.squaredNorm() + n2.squaredNorm());
 
-  *optimal_point1 =
-      (point1_homogeneous - S.transpose() * lambda * n1).hnormalized();
-  *optimal_point2 =
-      (point2_homogeneous - S.transpose() * lambda * n2).hnormalized();
+  *optimal_point1 = (point1 - S.transpose() * lambda * n1).normalized();
+  *optimal_point2 = (point2 - S.transpose() * lambda * n2).normalized();
 }
 
 Eigen::Vector3d EpipoleFromEssentialMatrix(const Eigen::Matrix3d& E,

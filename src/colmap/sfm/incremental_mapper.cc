@@ -323,17 +323,15 @@ void IncrementalMapper::RegisterInitialImagePair(
   track.Element(0).image_id = image_id1;
   track.Element(1).image_id = image_id2;
   for (const auto& corr : corrs) {
-    const Eigen::Vector2d point2D1 =
+    const Eigen::Vector3d point2D1 =
         camera1.CamFromImg(image1.Point2D(corr.point2D_idx1).xy);
-    const Eigen::Vector2d point2D2 =
+    const Eigen::Vector3d point2D2 =
         camera2.CamFromImg(image2.Point2D(corr.point2D_idx2).xy);
     Eigen::Vector3d xyz;
-    if (TriangulatePoint(
-            cam_from_world1, cam_from_world2, point2D1, point2D2, &xyz) &&
+    if (TriangulateIDWMidpoint(
+            cam_from_world1, cam_from_world2, point2D1, point2D2, xyz) &&
         CalculateTriangulationAngle(proj_center1, proj_center2, xyz) >=
-            min_tri_angle_rad &&
-        HasPointPositiveDepth(cam_from_world1, xyz) &&
-        HasPointPositiveDepth(cam_from_world2, xyz)) {
+            min_tri_angle_rad) {
       track.Element(0).point2D_idx = corr.point2D_idx1;
       track.Element(1).point2D_idx = corr.point2D_idx2;
       obs_manager_->AddPoint3D(xyz, track);

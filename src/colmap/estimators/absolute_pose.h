@@ -42,9 +42,7 @@ namespace colmap {
 class P3PEstimator {
  public:
   // The 2D image feature observations.
-  // TODO(jsch): Possibly change to 3D ray directions and express residuals as
-  // angular errors. Needs some evaluation.
-  typedef Eigen::Vector2d X_t;
+  typedef Eigen::Vector3d X_t;
   // The observed 3D features in the world frame.
   typedef Eigen::Vector3d Y_t;
   // The transformation from the world to the camera frame.
@@ -118,7 +116,7 @@ class P4PFEstimator {
 class EPNPEstimator {
  public:
   // The 2D image feature observations.
-  typedef Eigen::Vector2d X_t;
+  typedef Eigen::Vector3d X_t;
   // The observed 3D features in the world frame.
   typedef Eigen::Vector3d Y_t;
   // The transformation from the world to the camera frame.
@@ -151,7 +149,7 @@ class EPNPEstimator {
                         std::vector<double>* residuals);
 
  private:
-  bool ComputePose(const std::vector<Eigen::Vector2d>& points2D,
+  bool ComputePose(const std::vector<Eigen::Vector3d>& points2D,
                    const std::vector<Eigen::Vector3d>& points3D,
                    Eigen::Matrix3x4d* cam_from_world);
 
@@ -193,7 +191,7 @@ class EPNPEstimator {
   double ComputeTotalReprojectionError(const Eigen::Matrix3d& R,
                                        const Eigen::Vector3d& t);
 
-  const std::vector<Eigen::Vector2d>* points2D_ = nullptr;
+  const std::vector<Eigen::Vector3d>* points2D_ = nullptr;
   const std::vector<Eigen::Vector3d>* points3D_ = nullptr;
   std::vector<Eigen::Vector3d> pcs_;
   std::vector<Eigen::Vector4d> alphas_;

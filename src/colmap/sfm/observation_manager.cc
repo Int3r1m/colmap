@@ -323,6 +323,7 @@ size_t ObservationManager::FilterObservationsWithNegativeDepth() {
   size_t num_filtered = 0;
   for (const auto image_id : reconstruction_.RegImageIds()) {
     const Image& image = reconstruction_.Image(image_id);
+    const Camera& camera = reconstruction_.Camera(image.CameraId());
     const Eigen::Matrix3x4d cam_from_world = image.CamFromWorld().ToMatrix();
     for (point2D_t point2D_idx = 0; point2D_idx < image.NumPoints2D();
          ++point2D_idx) {
@@ -330,7 +331,8 @@ size_t ObservationManager::FilterObservationsWithNegativeDepth() {
       if (point2D.HasPoint3D()) {
         const struct Point3D& point3D =
             reconstruction_.Point3D(point2D.point3D_id);
-        if (!HasPointPositiveDepth(cam_from_world, point3D.xyz)) {
+        if (camera.model_id != CameraModelId::kSpherical &&
+            !HasPointPositiveDepth(cam_from_world, point3D.xyz)) {
           DeleteObservation(image_id, point2D_idx);
           num_filtered += 1;
         }

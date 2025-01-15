@@ -69,8 +69,10 @@ void TriangulationEstimator::Estimate(const std::vector<X_t>& point_data,
                          point_data[0].point_normalized,
                          point_data[1].point_normalized,
                          &xyz) &&
-        HasPointPositiveDepth(pose_data[0].cam_from_world, xyz) &&
-        HasPointPositiveDepth(pose_data[1].cam_from_world, xyz) &&
+        (pose_data[0].camera->model_id == CameraModelId::kSpherical ||
+         HasPointPositiveDepth(pose_data[0].cam_from_world, xyz)) &&
+        (pose_data[1].camera->model_id == CameraModelId::kSpherical ||
+         HasPointPositiveDepth(pose_data[1].cam_from_world, xyz)) &&
         CalculateTriangulationAngle(pose_data[0].proj_center,
                                     pose_data[1].proj_center,
                                     xyz) >= min_tri_angle_) {
@@ -83,7 +85,7 @@ void TriangulationEstimator::Estimate(const std::vector<X_t>& point_data,
 
     std::vector<Eigen::Matrix3x4d> proj_matrices;
     proj_matrices.reserve(point_data.size());
-    std::vector<Eigen::Vector2d> points;
+    std::vector<Eigen::Vector3d> points;
     points.reserve(point_data.size());
     for (size_t i = 0; i < point_data.size(); ++i) {
       proj_matrices.push_back(pose_data[i].cam_from_world);
@@ -97,7 +99,8 @@ void TriangulationEstimator::Estimate(const std::vector<X_t>& point_data,
 
     // Check for cheirality constraint.
     for (const auto& pose : pose_data) {
-      if (!HasPointPositiveDepth(pose.cam_from_world, xyz)) {
+      if (pose.camera->model_id != CameraModelId::kSpherical &&
+          !HasPointPositiveDepth(pose.cam_from_world, xyz)) {
         return;
       }
     }
@@ -185,6 +188,76 @@ bool EstimateTriangulation(const EstimateTriangulationOptions& options,
   *xyz = report.model;
 
   return report.success;
+}
+
+bool EstimateTriangulationPro(
+    const EstimateTriangulationOptions& options,
+    const std::vector<Eigen::Vector2d>& points,
+    const std::vector<Rigid3d const*>& cams_from_world,
+    const std::vector<Camera const*>& cameras,
+    std::vector<char>* inlier_mask,
+    Eigen::Vector3d* xyz) {
+  if (points.size() == 2) {
+    Eigen::Vector3d point3D = Eigen::Vector3d::Zero();
+    if (TriangulateIDWMidpoint(cams_from_world[0]->ToMatrix(),
+                               cams_from_world[1]->ToMatrix(),
+                               cameras[0]->CamFromImg(points[0]),
+                               cameras[1]->CamFromImg(points[1]),
+                               point3D) &&
+        CalculateTriangulationAngle(cams_from_world[0]->rotation.inverse() *
+                                        -cams_from_world[0]->translation,
+                                    cams_from_world[1]->rotation.inverse() *
+                                        -cams_from_world[1]->translation,
+                                    point3D) >= options.min_tri_angle) {
+      *xyz = point3D;
+      (*inlier_mask).resize(points.size());
+      for (std::size_t i = 0; i < points.size(); ++i) {
+        (*inlier_mask)[i] = static_cast<char>(1);
+      }
+      return true;
+    }
+
+    return false;
+  }
+
+  std::vector<Eigen::Vector3d> points2D_in_cam;
+  std::vector<Eigen::Matrix3x4d> project_matrices;
+  points2D_in_cam.reserve(points.size());
+  project_matrices.reserve(cams_from_world.size());
+
+  for (std::size_t i = 0; i < points.size(); ++i) {
+    points2D_in_cam.push_back(cameras[i]->CamFromImg(points[i]));
+    project_matrices.push_back(cams_from_world[i]->ToMatrix());
+  }
+
+  std::vector<double> weights(points.size(), 1.0);
+  Eigen::Vector3d point3D = Eigen::Vector3d::Zero();
+  if (!TriangulateMultiViewPointIGG(
+          project_matrices, points2D_in_cam, weights, point3D)) {
+    return false;
+  }
+
+  for (std::size_t i = 0; i < points.size(); ++i) {
+    for (std::size_t j = 0; j < i; ++j) {
+      const double tri_angle =
+          CalculateTriangulationAngle(cams_from_world[i]->rotation.inverse() *
+                                          -cams_from_world[i]->translation,
+                                      cams_from_world[j]->rotation.inverse() *
+                                          -cams_from_world[j]->translation,
+                                      point3D);
+      if (tri_angle >= options.min_tri_angle) {
+        *xyz = point3D;
+        goto here;
+      }
+    }
+  }
+here:
+  (*inlier_mask).resize(points.size());
+  for (std::size_t i = 0; i < points.size(); ++i) {
+    (*inlier_mask)[i] = weights[i] > 0.0;
+  }
+
+  return true;
 }
 
 }  // namespace colmap

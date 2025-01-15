@@ -339,9 +339,9 @@ bool EstimateTwoViewGeometryPose(const Camera& camera1,
   }
 
   // Extract normalized inlier points.
-  std::vector<Eigen::Vector2d> inlier_points1_normalized;
+  std::vector<Eigen::Vector3d> inlier_points1_normalized;
   inlier_points1_normalized.reserve(geometry->inlier_matches.size());
-  std::vector<Eigen::Vector2d> inlier_points2_normalized;
+  std::vector<Eigen::Vector3d> inlier_points2_normalized;
   inlier_points2_normalized.reserve(geometry->inlier_matches.size());
   for (const auto& match : geometry->inlier_matches) {
     inlier_points1_normalized.push_back(
@@ -385,7 +385,7 @@ bool EstimateTwoViewGeometryPose(const Camera& camera1,
     geometry->tri_angle = 0;
   } else {
     const Eigen::Vector3d proj_center1 = Eigen::Vector3d::Zero();
-    const Eigen::Vector3d proj_center2 = geometry->cam2_from_cam1.rotation *
+    const Eigen::Vector3d proj_center2 = geometry->cam2_from_cam1.rotation.inverse() *
                                          -geometry->cam2_from_cam1.translation;
     geometry->tri_angle = Median(
         CalculateTriangulationAngles(proj_center1, proj_center2, points3D));
@@ -424,8 +424,8 @@ TwoViewGeometry EstimateCalibratedTwoViewGeometry(
   // Extract corresponding points.
   std::vector<Eigen::Vector2d> matched_points1(matches.size());
   std::vector<Eigen::Vector2d> matched_points2(matches.size());
-  std::vector<Eigen::Vector2d> matched_points1_normalized(matches.size());
-  std::vector<Eigen::Vector2d> matched_points2_normalized(matches.size());
+  std::vector<Eigen::Vector3d> matched_points1_normalized(matches.size());
+  std::vector<Eigen::Vector3d> matched_points2_normalized(matches.size());
   for (size_t i = 0; i < matches.size(); ++i) {
     const point2D_t idx1 = matches[i].point2D_idx1;
     const point2D_t idx2 = matches[i].point2D_idx2;

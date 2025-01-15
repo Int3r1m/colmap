@@ -54,19 +54,21 @@ bool EstimateAbsolutePose(const AbsolutePoseEstimationOptions& options,
   *num_inliers = 0;
   inlier_mask->clear();
 
-  std::vector<Eigen::Vector2d> points2D_normalized(points2D.size());
-  for (size_t i = 0; i < points2D.size(); ++i) {
-    points2D_normalized[i] = camera->CamFromImg(points2D[i]);
-  }
+  // std::vector<Eigen::Vector2d> points2D_normalized(points2D.size());
+  // for (size_t i = 0; i < points2D.size(); ++i) {
+  //   points2D_normalized[i] = camera->CamFromImg(points2D[i]);
+  // }
 
   auto custom_ransac_options = options.ransac_options;
   custom_ransac_options.max_error =
       camera->CamFromImgThreshold(options.ransac_options.max_error);
 
-  if (options.estimate_focal_length) {
-    // TODO(jsch): Implement non-minimal solver for LORANSAC refinement.
-    // Experiments showed marginal difference between RANSAC/LORANSAC for PNPF
-    // after refining the estimates of this function using RefineAbsolutePose.
+  if (options.estimate_focal_length &&
+      camera->model_id != CameraModelId::kSpherical) {
+    std::vector<Eigen::Vector2d> points2D_normalized(points2D.size());
+    for (std::size_t i = 0; i < points2D.size(); ++i) {
+      points2D_normalized[i] = camera->CamFromImg(points2D[i]).hnormalized();
+    }
     RANSAC<P4PFEstimator> ransac(custom_ransac_options);
     auto report = ransac.Estimate(points2D_normalized, points3D);
     if (report.success) {
@@ -81,6 +83,10 @@ bool EstimateAbsolutePose(const AbsolutePoseEstimationOptions& options,
       return true;
     }
   } else {
+    std::vector<Eigen::Vector3d> points2D_normalized(points2D.size());
+    for (std::size_t i = 0; i < points2D.size(); ++i) {
+      points2D_normalized[i] = camera->CamFromImg(points2D[i]);
+    }
     LORANSAC<P3PEstimator, EPNPEstimator> ransac(custom_ransac_options);
     auto report = ransac.Estimate(points2D_normalized, points3D);
     if (report.success) {
@@ -96,8 +102,8 @@ bool EstimateAbsolutePose(const AbsolutePoseEstimationOptions& options,
 }
 
 size_t EstimateRelativePose(const RANSACOptions& ransac_options,
-                            const std::vector<Eigen::Vector2d>& points1,
-                            const std::vector<Eigen::Vector2d>& points2,
+                            const std::vector<Eigen::Vector3d>& points1,
+                            const std::vector<Eigen::Vector3d>& points2,
                             Rigid3d* cam2_from_cam1) {
   RANSAC<EssentialMatrixFivePointEstimator> ransac(ransac_options);
   const auto report = ransac.Estimate(points1, points2);
@@ -106,8 +112,8 @@ size_t EstimateRelativePose(const RANSACOptions& ransac_options,
     return 0;
   }
 
-  std::vector<Eigen::Vector2d> inliers1(report.support.num_inliers);
-  std::vector<Eigen::Vector2d> inliers2(report.support.num_inliers);
+  std::vector<Eigen::Vector3d> inliers1(report.support.num_inliers);
+  std::vector<Eigen::Vector3d> inliers2(report.support.num_inliers);
 
   size_t j = 0;
   for (size_t i = 0; i < points1.size(); ++i) {
@@ -248,8 +254,8 @@ bool RefineAbsolutePose(const AbsolutePoseRefinementOptions& options,
 }
 
 bool RefineRelativePose(const ceres::Solver::Options& options,
-                        const std::vector<Eigen::Vector2d>& points1,
-                        const std::vector<Eigen::Vector2d>& points2,
+                        const std::vector<Eigen::Vector3d>& points1,
+                        const std::vector<Eigen::Vector3d>& points2,
                         Rigid3d* cam2_from_cam1) {
   THROW_CHECK_EQ(points1.size(), points2.size());
 
@@ -283,8 +289,8 @@ bool RefineRelativePose(const ceres::Solver::Options& options,
 }
 
 bool RefineEssentialMatrix(const ceres::Solver::Options& options,
-                           const std::vector<Eigen::Vector2d>& points1,
-                           const std::vector<Eigen::Vector2d>& points2,
+                           const std::vector<Eigen::Vector3d>& points1,
+                           const std::vector<Eigen::Vector3d>& points2,
                            const std::vector<char>& inlier_mask,
                            Eigen::Matrix3d* E) {
   THROW_CHECK_EQ(points1.size(), points2.size());
@@ -300,8 +306,8 @@ bool RefineEssentialMatrix(const ceres::Solver::Options& options,
     }
   }
 
-  std::vector<Eigen::Vector2d> inlier_points1(num_inliers);
-  std::vector<Eigen::Vector2d> inlier_points2(num_inliers);
+  std::vector<Eigen::Vector3d> inlier_points1(num_inliers);
+  std::vector<Eigen::Vector3d> inlier_points2(num_inliers);
   size_t j = 0;
   for (size_t i = 0; i < inlier_mask.size(); ++i) {
     if (inlier_mask[i]) {
