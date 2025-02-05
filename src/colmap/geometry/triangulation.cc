@@ -45,14 +45,21 @@ bool TriangulatePoint(const Eigen::Matrix3x4d& cam1_from_world,
   THROW_CHECK_NOTNULL(xyz);
 
   Eigen::Matrix<double, 6, 4> A;
-  A.row(0) = -point1(2) * cam1_from_world.row(1) + point1(1) * cam1_from_world.row(2);
-  A.row(1) = point1(2) * cam1_from_world.row(0) - point1(0) * cam1_from_world.row(2);
-  A.row(2) = -point1(1) * cam1_from_world.row(0) + point1(0) * cam1_from_world.row(1);
-  A.row(3) = -point2(2) * cam2_from_world.row(1) + point2(1) * cam2_from_world.row(2);
-  A.row(4) = point2(2) * cam2_from_world.row(0) - point2(0) * cam2_from_world.row(2);
-  A.row(5) = -point2(1) * cam2_from_world.row(0) + point2(0) * cam2_from_world.row(1);
+  A.row(0) =
+      -point1(2) * cam1_from_world.row(1) + point1(1) * cam1_from_world.row(2);
+  A.row(1) =
+      point1(2) * cam1_from_world.row(0) - point1(0) * cam1_from_world.row(2);
+  A.row(2) =
+      -point1(1) * cam1_from_world.row(0) + point1(0) * cam1_from_world.row(1);
+  A.row(3) =
+      -point2(2) * cam2_from_world.row(1) + point2(1) * cam2_from_world.row(2);
+  A.row(4) =
+      point2(2) * cam2_from_world.row(0) - point2(0) * cam2_from_world.row(2);
+  A.row(5) =
+      -point2(1) * cam2_from_world.row(0) + point2(0) * cam2_from_world.row(1);
 
-  const Eigen::JacobiSVD<Eigen::Matrix<double, 6, 4>> svd(A, Eigen::ComputeFullV);
+  const Eigen::JacobiSVD<Eigen::Matrix<double, 6, 4>> svd(A,
+                                                          Eigen::ComputeFullV);
 #if EIGEN_VERSION_AT_LEAST(3, 4, 0)
   if (svd.info() != Eigen::Success) {
     return false;
@@ -109,19 +116,18 @@ bool TriangulateIDWMidpoint(const Eigen::Matrix3x4d& cam1_from_world,
   const double q_norm = Rx0.cross(t).norm();
   const double r_norm = point2.cross(t).norm();
 
-  const auto xprime1 = (q_norm / (q_norm + r_norm))
-    * (t + (r_norm / p_norm) * (Rx0 + point2));
+  const auto xprime1 =
+      (q_norm / (q_norm + r_norm)) * (t + (r_norm / p_norm) * (Rx0 + point2));
 
   point3D = R1.transpose() * (xprime1 - t1);
 
   const Eigen::Vector3d lambda0_Rx0 = (r_norm / p_norm) * Rx0;
   const Eigen::Vector3d lambda1_x1 = (q_norm / p_norm) * point2;
 
-  return (t + lambda0_Rx0 - lambda1_x1).squaredNorm()
-    < std::min(std::min(
-      (t + lambda0_Rx0 + lambda1_x1).squaredNorm(),
-      (t - lambda0_Rx0 - lambda1_x1).squaredNorm()),
-      (t - lambda0_Rx0 + lambda1_x1).squaredNorm());
+  return (t + lambda0_Rx0 - lambda1_x1).squaredNorm() <
+         std::min(std::min((t + lambda0_Rx0 + lambda1_x1).squaredNorm(),
+                           (t - lambda0_Rx0 - lambda1_x1).squaredNorm()),
+                  (t - lambda0_Rx0 + lambda1_x1).squaredNorm());
 }
 
 bool TriangulateMultiViewPointIGG(
@@ -151,7 +157,7 @@ bool TriangulateMultiViewPointIGG(
   if ((point3D - point3D_previous).norm() < 1e-2) {
     return true;
   }
-  
+
   // Update the weights
   double sum = 0;
   std::vector<double> distances(points.size(), 0.0);
@@ -170,7 +176,7 @@ bool TriangulateMultiViewPointIGG(
   for (std::size_t i = 0; i < points.size(); ++i) {
     const double u = std::abs(distances[i] / sigma);
     if (u < k0) {
-      weights[i] = 1.0; 
+      weights[i] = 1.0;
     } else if (u >= k0 && u < k1) {
       weights[i] = k0 / u;
     } else {
@@ -179,7 +185,8 @@ bool TriangulateMultiViewPointIGG(
   }
 
   // Continue iteration
-  return TriangulateMultiViewPointIGG(cams_from_world, points, weights, point3D);
+  return TriangulateMultiViewPointIGG(
+      cams_from_world, points, weights, point3D);
 }
 
 bool TriangulateOptimalPoint(const Eigen::Matrix3x4d& cam1_from_world_mat,
@@ -225,7 +232,8 @@ double CalculateTriangulationAngle(const Eigen::Vector3d& proj_center1,
   }
   const double nominator =
       ray_length_squared1 + ray_length_squared2 - baseline_length_squared;
-  const double angle = std::abs(std::acos(nominator / denominator));
+  const double angle =
+      std::abs(std::acos(std::clamp(nominator / denominator, -1.0, 1.0)));
 
   // Triangulation is unstable for acute angles (far away points) and
   // obtuse angles (close points), so always compute the minimum angle
