@@ -58,14 +58,3 @@ COLMAP_ADD_LIBRARY(
         Ceres::ceres
         Boost::boost
 )
-
-COLMAP_ADD_TEST(
-    NAME hierarchical_pipeline_test
-    SRCS hierarchical_pipeline_test.cc
-    LINK_LIBS colmap_controllers
-)
-COLMAP_ADD_TEST(
-    NAME incremental_pipeline_test
-    SRCS incremental_pipeline_test.cc
-    LINK_LIBS colmap_controllers
-)

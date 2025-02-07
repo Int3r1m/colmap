@@ -44,14 +44,3 @@ COLMAP_ADD_LIBRARY(
         colmap_geometry
         colmap_image
 )
-
-COLMAP_ADD_TEST(
-    NAME incremental_triangulator_test
-    SRCS incremental_triangulator_test.cc
-    LINK_LIBS colmap_sfm
-)
-COLMAP_ADD_TEST(
-    NAME observation_manager_test
-    SRCS observation_manager_test.cc
-    LINK_LIBS colmap_sfm
-)

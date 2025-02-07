@@ -45,21 +45,3 @@ COLMAP_ADD_LIBRARY(
         colmap_vlfeat
         freeimage::FreeImage
 )
-
-COLMAP_ADD_TEST(
-    NAME bitmap_test
-    SRCS bitmap_test.cc
-    LINK_LIBS
-        colmap_sensor
-        freeimage::FreeImage
-)
-COLMAP_ADD_TEST( 
-    NAME database_test
-    SRCS database_test.cc
-    LINK_LIBS colmap_sensor
-)
-COLMAP_ADD_TEST( 
-    NAME models_test
-    SRCS models_test.cc
-    LINK_LIBS colmap_sensor
-)

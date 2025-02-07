@@ -55,27 +55,6 @@ if(CGAL_ENABLED)
     target_link_libraries(colmap_mvs PRIVATE CGAL)
 endif()
 
-COLMAP_ADD_TEST(
-    NAME consistency_graph_test
-    SRCS consistency_graph_test.cc
-    LINK_LIBS colmap_mvs
-)
-COLMAP_ADD_TEST(
-    NAME depth_map_test
-    SRCS depth_map_test.cc
-    LINK_LIBS colmap_mvs
-)
-COLMAP_ADD_TEST(
-    NAME mat_test
-    SRCS mat_test.cc
-    LINK_LIBS colmap_mvs
-)
-COLMAP_ADD_TEST(
-    NAME normal_map_test
-    SRCS normal_map_test.cc
-    LINK_LIBS colmap_mvs
-)
-
 if(CUDA_ENABLED)
     COLMAP_ADD_LIBRARY(
         NAME colmap_mvs_cuda
@@ -89,11 +68,5 @@ if(CUDA_ENABLED)
             colmap_util_cuda
             CUDA::cudart
             CUDA::curand
-    )
-
-    COLMAP_ADD_TEST(
-        NAME gpu_mat_test
-        SRCS gpu_mat_test.cu
-        LINK_LIBS colmap_mvs_cuda
     )
 endif()

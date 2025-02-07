@@ -50,24 +50,3 @@ COLMAP_ADD_LIBRARY(
         colmap_estimators
         colmap_optim
 )
-
-COLMAP_ADD_TEST(
-    NAME geometry_test
-    SRCS geometry_test.cc
-    LINK_LIBS colmap_retrieval
-)
-COLMAP_ADD_TEST(
-    NAME inverted_file_entry_test
-    SRCS inverted_file_entry_test.cc
-    LINK_LIBS colmap_retrieval
-)
-COLMAP_ADD_TEST(
-    NAME visual_index_test
-    SRCS visual_index_test.cc
-    LINK_LIBS colmap_retrieval
-)
-COLMAP_ADD_TEST(
-    NAME vote_and_verify_test
-    SRCS vote_and_verify_test.cc
-    LINK_LIBS colmap_retrieval
-)

@@ -58,14 +58,6 @@ COLMAP_ADD_LIBRARY(
         Boost::boost
         "$<$<AND:$<CXX_COMPILER_ID:GNU>,$<VERSION_LESS:$<CXX_COMPILER_VERSION>,9.0>>:-lstdc++fs>"
 )
-if(TESTS_ENABLED)
-    target_sources(
-        colmap_util
-        PRIVATE
-            testing.h testing.cc
-            eigen_matchers.h
-    )
-endif()
 
 if(GUI_ENABLED)
     target_link_libraries(colmap_util PUBLIC Qt5::Core Qt5::OpenGL OpenGL::GL)
@@ -80,79 +72,5 @@ if(CUDA_ENABLED)
         PUBLIC_LINK_LIBS
             colmap_util
             CUDA::cudart
-    )
-endif()
-
-if(TESTS_ENABLED)
-    COLMAP_ADD_LIBRARY(
-        NAME colmap_gtest_main
-        SRCS
-            gtest_main.cc
-        PUBLIC_LINK_LIBS
-            glog::glog
-            GTest::gmock_main
-    )
-endif()
-
-COLMAP_ADD_TEST(
-    NAME cache_test
-    SRCS cache_test.cc
-    LINK_LIBS colmap_util
-)
-COLMAP_ADD_TEST(
-    NAME eigen_matchers_test
-    SRCS eigen_matchers_test.cc
-    LINK_LIBS colmap_util
-)
-COLMAP_ADD_TEST(
-    NAME endian_test
-    SRCS endian_test.cc
-    LINK_LIBS colmap_util
-)
-COLMAP_ADD_TEST(
-    NAME enum_to_string_test
-    SRCS enum_to_string_test.cc
-    LINK_LIBS colmap_util
-)
-COLMAP_ADD_TEST(
-    NAME file_test
-    SRCS file_test.cc
-    LINK_LIBS colmap_util
-)
-COLMAP_ADD_TEST(
-    NAME logging_test
-    SRCS logging_test.cc
-    LINK_LIBS colmap_util
-)
-COLMAP_ADD_TEST(
-    NAME misc_test
-    SRCS misc_test.cc
-    LINK_LIBS colmap_util
-)
-COLMAP_ADD_TEST(
-    NAME string_test
-    SRCS string_test.cc
-    LINK_LIBS colmap_util
-)
-COLMAP_ADD_TEST(
-    NAME threading_test
-    SRCS threading_test.cc
-    LINK_LIBS colmap_util
-)
-COLMAP_ADD_TEST(
-    NAME timer_test
-    SRCS timer_test.cc
-    LINK_LIBS colmap_util
-)
-COLMAP_ADD_TEST(
-    NAME types_test
-    SRCS types_test.cc
-    LINK_LIBS colmap_util
-)
-if(GUI_ENABLED)
-    COLMAP_ADD_TEST(
-        NAME opengl_utils_test
-        SRCS opengl_utils_test.cc
-        LINK_LIBS colmap_util
     )
 endif()

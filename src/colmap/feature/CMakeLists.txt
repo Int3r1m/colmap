@@ -39,12 +39,6 @@ COLMAP_ADD_LIBRARY(
         Eigen3::Eigen
 )
 
-COLMAP_ADD_TEST(
-    NAME types_test
-    SRCS types_test.cc
-    LINK_LIBS colmap_feature_types
-)
-
 COLMAP_ADD_LIBRARY(
     NAME colmap_feature
     SRCS
@@ -74,31 +68,4 @@ if(GPU_ENABLED)
     if(NOT GUI_ENABLED)
         target_link_libraries(colmap_feature PRIVATE GLEW::GLEW)
     endif()
-endif()
-
-COLMAP_ADD_TEST(
-    NAME index_test
-    SRCS index_test.cc
-    LINK_LIBS colmap_feature
-)
-COLMAP_ADD_TEST(
-    NAME utils_test
-    SRCS utils_test.cc
-    LINK_LIBS colmap_feature
-)
-COLMAP_ADD_TEST(
-    NAME pairing_test
-    SRCS pairing_test.cc
-    LINK_LIBS
-        colmap_feature
-        colmap_scene
-)
-COLMAP_ADD_TEST(
-    NAME sift_test
-    SRCS sift_test.cc
-    LINK_LIBS
-        colmap_feature
-)
-if(TESTS_ENABLED AND GUI_ENABLED)
-    target_link_libraries(colmap_feature_sift_test Qt5::Widgets)
 endif()

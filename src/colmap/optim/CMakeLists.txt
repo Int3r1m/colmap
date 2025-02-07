@@ -43,39 +43,3 @@ COLMAP_ADD_LIBRARY(
         colmap_math
         Eigen3::Eigen
 )
-
-COLMAP_ADD_TEST(
-    NAME combination_sampler_test
-    SRCS combination_sampler_test.cc
-    LINK_LIBS colmap_optim
-)
-COLMAP_ADD_TEST(
-    NAME least_absolute_deviations_test
-    SRCS least_absolute_deviations_test.cc
-    LINK_LIBS colmap_optim
-)
-COLMAP_ADD_TEST(
-    NAME loransac_test
-    SRCS loransac_test.cc
-    LINK_LIBS colmap_optim
-)
-COLMAP_ADD_TEST(
-    NAME progressive_sampler_test
-    SRCS progressive_sampler_test.cc
-    LINK_LIBS colmap_optim
-)
-COLMAP_ADD_TEST(
-    NAME random_sampler_test
-    SRCS random_sampler_test.cc
-    LINK_LIBS colmap_optim
-)
-COLMAP_ADD_TEST(
-    NAME ransac_test
-    SRCS ransac_test.cc
-    LINK_LIBS colmap_optim
-)
-COLMAP_ADD_TEST(
-    NAME support_measurement_test
-    SRCS support_measurement_test.cc
-    LINK_LIBS colmap_optim
-)

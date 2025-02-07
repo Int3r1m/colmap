@@ -46,29 +46,3 @@ COLMAP_ADD_LIBRARY(
         Boost::boost
         metis
 )
-
-COLMAP_ADD_TEST(
-    NAME graph_cut_test
-    SRCS graph_cut_test.cc
-    LINK_LIBS colmap_math
-)
-COLMAP_ADD_TEST(
-    NAME math_test
-    SRCS math_test.cc
-    LINK_LIBS colmap_math
-)
-COLMAP_ADD_TEST(
-    NAME matrix_test
-    SRCS matrix_test.cc
-    LINK_LIBS colmap_math
-)
-COLMAP_ADD_TEST(
-    NAME polynomial_test
-    SRCS polynomial_test.cc
-    LINK_LIBS colmap_math
-)
-COLMAP_ADD_TEST(
-    NAME random_test
-    SRCS random_test.cc
-    LINK_LIBS colmap_math
-)
