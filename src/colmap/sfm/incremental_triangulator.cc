@@ -72,7 +72,9 @@ bool IncrementalTriangulator::Options::Check() const {
   CHECK_OPTION_GT(create_max_angle_error, 0);
   CHECK_OPTION_GT(continue_max_angle_error, 0);
   CHECK_OPTION_GT(merge_max_reproj_error, 0);
+  CHECK_OPTION_GT(merge_max_angle_error, 0);
   CHECK_OPTION_GT(complete_max_reproj_error, 0);
+  CHECK_OPTION_GT(complete_max_angle_error, 0);
   CHECK_OPTION_GE(complete_max_transitivity, 0);
   CHECK_OPTION_GT(re_max_angle_error, 0);
   CHECK_OPTION_GE(re_min_ratio, 0);
@@ -547,6 +549,9 @@ size_t IncrementalTriangulator::Continue(
   double best_angle_error = std::numeric_limits<double>::max();
   size_t best_idx = std::numeric_limits<size_t>::max();
 
+  double worst_angle_error = std::numeric_limits<double>::min();
+  size_t worst_idx = std::numeric_limits<size_t>::max();
+
   for (size_t idx = 0; idx < corrs_data.size(); ++idx) {
     const CorrData& corr_data = corrs_data[idx];
     if (!corr_data.point2D->HasPoint3D()) {
@@ -561,21 +566,40 @@ size_t IncrementalTriangulator::Continue(
                               point3D.xyz,
                               ref_corr_data.image->CamFromWorld(),
                               *ref_corr_data.camera);
-    if (angle_error < best_angle_error) {
-      best_angle_error = angle_error;
-      best_idx = idx;
+    if (options.use_strong_continue) {
+      if (angle_error > worst_angle_error) {
+        worst_angle_error = angle_error;
+        worst_idx = idx;
+      }
+    } else {
+      if (angle_error < best_angle_error) {
+        best_angle_error = angle_error;
+        best_idx = idx;
+      }
     }
   }
 
   const double max_angle_error = DegToRad(options.continue_max_angle_error);
-  if (best_angle_error <= max_angle_error &&
-      best_idx != std::numeric_limits<size_t>::max()) {
-    const CorrData& corr_data = corrs_data[best_idx];
-    const TrackElement track_el(ref_corr_data.image_id,
-                                ref_corr_data.point2D_idx);
-    obs_manager_->AddObservation(corr_data.point2D->point3D_id, track_el);
-    modified_point3D_ids_.insert(corr_data.point2D->point3D_id);
-    return 1;
+  if (options.use_strong_continue) {
+    if (worst_angle_error <= max_angle_error &&
+        worst_idx != std::numeric_limits<size_t>::max()) {
+      const CorrData& corr_data = corrs_data[worst_idx];
+      const TrackElement track_el(ref_corr_data.image_id,
+                                  ref_corr_data.point2D_idx);
+      obs_manager_->AddObservation(corr_data.point2D->point3D_id, track_el);
+      modified_point3D_ids_.insert(corr_data.point2D->point3D_id);
+      return 1;
+    }
+  } else {
+    if (best_angle_error <= max_angle_error &&
+        best_idx != std::numeric_limits<size_t>::max()) {
+      const CorrData& corr_data = corrs_data[best_idx];
+      const TrackElement track_el(ref_corr_data.image_id,
+                                  ref_corr_data.point2D_idx);
+      obs_manager_->AddObservation(corr_data.point2D->point3D_id, track_el);
+      modified_point3D_ids_.insert(corr_data.point2D->point3D_id);
+      return 1;
+    }
   }
 
   return 0;
@@ -589,6 +613,7 @@ size_t IncrementalTriangulator::Merge(const Options& options,
 
   const double max_squared_reproj_error =
       options.merge_max_reproj_error * options.merge_max_reproj_error;
+  const double max_angle_error = DegToRad(options.merge_max_angle_error);
 
   const auto& point3D = reconstruction_.Point3D(point3D_id);
 
@@ -630,13 +655,23 @@ size_t IncrementalTriangulator::Merge(const Options& options,
           const Camera& test_camera = *test_image.CameraPtr();
           const Point2D& test_point2D =
               test_image.Point2D(test_track_el.point2D_idx);
-          if (CalculateSquaredReprojectionError(test_point2D.xy,
-                                                merged_xyz,
-                                                test_image.CamFromWorld(),
-                                                test_camera) >
-              max_squared_reproj_error) {
-            merge_success = false;
-            break;
+          if (options.merge_use_angle_error) {
+            if (CalculateAngularError(test_point2D.xy,
+                                      merged_xyz,
+                                      test_image.CamFromWorld(),
+                                      test_camera) > max_angle_error) {
+              merge_success = false;
+              break;
+            }
+          } else {
+            if (CalculateSquaredReprojectionError(test_point2D.xy,
+                                                  merged_xyz,
+                                                  test_image.CamFromWorld(),
+                                                  test_camera) >
+                max_squared_reproj_error) {
+              merge_success = false;
+              break;
+            }
           }
         }
         if (!merge_success) {
@@ -681,6 +716,7 @@ size_t IncrementalTriangulator::Complete(const Options& options,
 
   const double max_squared_reproj_error =
       options.complete_max_reproj_error * options.complete_max_reproj_error;
+  const double max_angle_error = DegToRad(options.complete_max_angle_error);
 
   const Point3D& point3D = reconstruction_.Point3D(point3D_id);
 
@@ -710,10 +746,18 @@ size_t IncrementalTriangulator::Complete(const Options& options,
           continue;
         }
 
-        if (CalculateSquaredReprojectionError(
-                point2D.xy, point3D.xyz, image.CamFromWorld(), camera) >
-            max_squared_reproj_error) {
-          continue;
+        if (options.complete_use_angle_error) {
+          if (CalculateAngularError(
+                  point2D.xy, point3D.xyz, image.CamFromWorld(), camera) >
+              max_angle_error) {
+            continue;
+          }
+        } else {
+          if (CalculateSquaredReprojectionError(
+                  point2D.xy, point3D.xyz, image.CamFromWorld(), camera) >
+              max_squared_reproj_error) {
+            continue;
+          }
         }
 
         // Success, add observation to point track.

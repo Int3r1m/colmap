@@ -27,14 +27,33 @@ void BindIncrementalTriangulator(py::module& m) {
           "continue_max_angle_error",
           &Opts::continue_max_angle_error,
           "Maximum angular error to continue existing triangulations.")
+      .def_readwrite("use_strong_continue",
+                     &Opts::use_strong_continue,
+                     "Whether to use strong continue.")
       .def_readwrite(
           "merge_max_reproj_error",
           &Opts::merge_max_reproj_error,
           "Maximum reprojection error in pixels to merge triangulations.")
+      .def_readwrite("merge_use_angle_error",
+                     &Opts::merge_use_angle_error,
+                     "Whether to use angular error to merge triangulations, "
+                     "otherwise use reprojection error.")
+      .def_readwrite("merge_max_angle_error",
+                     &Opts::merge_max_angle_error,
+                     "Maximum angular error to merge triangulations.")
       .def_readwrite(
           "complete_max_reproj_error",
           &Opts::complete_max_reproj_error,
           "Maximum reprojection error to complete an existing triangulation.")
+      .def_readwrite(
+          "complete_use_angle_error",
+          &Opts::complete_use_angle_error,
+          "Whether to use angular error complete an existing triangulation, "
+          "otherwise use reprojection error.")
+      .def_readwrite(
+          "complete_max_angle_error",
+          &Opts::complete_max_angle_error,
+          "Maximum angular error to complete an existing triangulation.")
       .def_readwrite("complete_max_transitivity",
                      &Opts::complete_max_transitivity,
                      "Maximum transitivity for track completion.")

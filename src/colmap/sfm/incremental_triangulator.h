@@ -46,27 +46,44 @@ class IncrementalTriangulator {
     int max_transitivity = 1;
 
     // Maximum angular error to create new triangulations.
-    double create_max_angle_error = 2.0;
+    double create_max_angle_error = 1.5;
 
     // Maximum angular error to continue existing triangulations.
-    double continue_max_angle_error = 2.0;
+    double continue_max_angle_error = 1.5;
+
+    // Whether to use strong continue.
+    bool use_strong_continue = true;
 
     // Maximum reprojection error in pixels to merge triangulations.
     double merge_max_reproj_error = 4.0;
 
+    // Whether to use angular error to merge triangulations, otherwise use
+    // reprojection error.
+    bool merge_use_angle_error = true;
+
+    // Maximum angular error to merge triangulations.
+    double merge_max_angle_error = 1.5;
+
     // Maximum reprojection error to complete an existing triangulation.
     double complete_max_reproj_error = 4.0;
+
+    // Whether to use angular error complete an existing triangulation,
+    // otherwise use reprojection error.
+    bool complete_use_angle_error = true;
+
+    // Maximum angular error to complete an existing triangulation.
+    double complete_max_angle_error = 1.5;
 
     // Maximum transitivity for track completion.
     int complete_max_transitivity = 5;
 
     // Maximum angular error to re-triangulate under-reconstructed image pairs.
-    double re_max_angle_error = 5.0;
+    double re_max_angle_error = 3.0;
 
     // Minimum ratio of common triangulations between an image pair over the
     // number of correspondences between that image pair to be considered
     // as under-reconstructed.
-    double re_min_ratio = 0.2;
+    double re_min_ratio = 0.3;
 
     // Maximum number of trials to re-triangulate an image pair.
     int re_max_trials = 1;

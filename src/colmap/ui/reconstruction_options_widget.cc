@@ -58,14 +58,24 @@ MapperTriangulationOptionsWidget::MapperTriangulationOptionsWidget(
                   "create_max_angle_error [deg]");
   AddOptionDouble(&options->mapper->triangulation.continue_max_angle_error,
                   "continue_max_angle_error [deg]");
+  AddOptionBool(&options->mapper->triangulation.use_strong_continue,
+                "use_strong_continue");
   AddOptionDouble(&options->mapper->triangulation.merge_max_reproj_error,
                   "merge_max_reproj_error [px]");
+  AddOptionBool(&options->mapper->triangulation.merge_use_angle_error,
+                "merge_use_angle_error");
+  AddOptionDouble(&options->mapper->triangulation.merge_max_angle_error,
+                  "merge_max_angle_error [deg]");
   AddOptionDouble(&options->mapper->triangulation.re_max_angle_error,
                   "re_max_angle_error [deg]");
   AddOptionDouble(&options->mapper->triangulation.re_min_ratio, "re_min_ratio");
   AddOptionInt(&options->mapper->triangulation.re_max_trials, "re_max_trials");
   AddOptionDouble(&options->mapper->triangulation.complete_max_reproj_error,
                   "complete_max_reproj_error [px]");
+  AddOptionBool(&options->mapper->triangulation.complete_use_angle_error,
+                "complete_use_angle_error");
+  AddOptionDouble(&options->mapper->triangulation.complete_max_angle_error,
+                  "complete_max_angle_error [deg]");
   AddOptionInt(&options->mapper->triangulation.complete_max_transitivity,
                "complete_max_transitivity");
   AddOptionDouble(

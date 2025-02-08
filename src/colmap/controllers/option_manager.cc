@@ -596,10 +596,20 @@ void OptionManager::AddMapperOptions() {
                               &mapper->triangulation.create_max_angle_error);
   AddAndRegisterDefaultOption("Mapper.tri_continue_max_angle_error",
                               &mapper->triangulation.continue_max_angle_error);
+  AddAndRegisterDefaultOption("Mapper.tri_use_strong_continue",
+                              &mapper->triangulation.use_strong_continue);
   AddAndRegisterDefaultOption("Mapper.tri_merge_max_reproj_error",
                               &mapper->triangulation.merge_max_reproj_error);
+  AddAndRegisterDefaultOption("Mapper.tri_merge_use_angle_error",
+                              &mapper->triangulation.merge_use_angle_error);
+  AddAndRegisterDefaultOption("Mapper.tri_merge_max_angle_error",
+                              &mapper->triangulation.merge_max_angle_error);
   AddAndRegisterDefaultOption("Mapper.tri_complete_max_reproj_error",
                               &mapper->triangulation.complete_max_reproj_error);
+  AddAndRegisterDefaultOption("Mapper.tri_complete_use_angle_error",
+                              &mapper->triangulation.complete_use_angle_error);
+  AddAndRegisterDefaultOption("Mapper.tri_complete_max_angle_error",
+                              &mapper->triangulation.complete_max_angle_error);
   AddAndRegisterDefaultOption("Mapper.tri_complete_max_transitivity",
                               &mapper->triangulation.complete_max_transitivity);
   AddAndRegisterDefaultOption("Mapper.tri_re_max_angle_error",
