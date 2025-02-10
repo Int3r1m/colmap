@@ -53,7 +53,7 @@ void EssentialMatrixFivePointEstimator::Estimate(
 
   models->clear();
 
-  // Setup system of equations: [points2(i,:)]' * E * [points1(i,:)]'.
+  // Setup system of equations.
 
   Eigen::Matrix<double, Eigen::Dynamic, 9> Q(points1.size(), 9);
   for (size_t i = 0; i < points1.size(); ++i) {
