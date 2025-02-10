@@ -83,7 +83,7 @@ void HomographyMatrixEstimator::Estimate(const std::vector<X_t>& points1,
     H = Eigen::Map<const Eigen::Matrix3d>(nullspace.data()).transpose();
   }
 
-  if (std::abs(H.determinant()) < 1e-8) {
+  if (std::abs(H.determinant()) < std::numeric_limits<double>::epsilon()) {
     return;
   }
 

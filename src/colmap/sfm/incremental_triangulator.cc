@@ -178,9 +178,15 @@ size_t IncrementalTriangulator::CompleteImage(const Options& options,
   // Setup estimation options.
   EstimateTriangulationOptions tri_options;
   tri_options.min_tri_angle = DegToRad(options.min_angle);
-  tri_options.residual_type =
-      TriangulationEstimator::ResidualType::REPROJECTION_ERROR;
-  tri_options.ransac_options.max_error = options.complete_max_reproj_error;
+  if (options.complete_use_angle_error) {
+    tri_options.residual_type =
+        TriangulationEstimator::ResidualType::ANGULAR_ERROR;
+    tri_options.ransac_options.max_error = options.complete_max_angle_error;
+  } else {
+    tri_options.residual_type =
+        TriangulationEstimator::ResidualType::REPROJECTION_ERROR;
+    tri_options.ransac_options.max_error = options.complete_max_reproj_error;
+  }
 
   // Correspondence data for reference observation in given image. We iterate
   // over all observations of the image and each observation once becomes

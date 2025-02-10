@@ -253,10 +253,36 @@ bool EstimateTriangulationPro(
   }
 here:
   (*inlier_mask).resize(points.size());
+  size_t inlier_count = 0;
   for (std::size_t i = 0; i < points.size(); ++i) {
-    (*inlier_mask)[i] = weights[i] > 0.0;
+    if (options.residual_type ==
+        TriangulationEstimator::ResidualType::REPROJECTION_ERROR) {
+      const double squared_reproj_error = CalculateSquaredReprojectionError(
+          points[i], *xyz, cams_from_world[i]->ToMatrix(), *cameras[i]);
+      if (squared_reproj_error <=
+          std::pow(options.ransac_options.max_error, 2)) {
+        (*inlier_mask)[i] = weights[i] > 0.0;
+        ++inlier_count;
+      } else {
+        (*inlier_mask)[i] = weights[i] > 1.0;
+      }
+    } else if (options.residual_type ==
+               TriangulationEstimator::ResidualType::ANGULAR_ERROR) {
+      const double angular_error = CalculateNormalizedAngularError(
+          points2D_in_cam[i], *xyz, *cams_from_world[i]);
+      if (angular_error <= options.ransac_options.max_error) {
+        (*inlier_mask)[i] = weights[i] > 0.0;
+        ++inlier_count;
+      } else {
+        (*inlier_mask)[i] = weights[i] > 1.0;
+      }
+    }
   }
 
+  if (inlier_count < 2) {
+    return false;
+  }
+  
   return true;
 }
 

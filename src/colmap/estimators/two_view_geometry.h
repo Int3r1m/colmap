@@ -154,6 +154,13 @@ TwoViewGeometry EstimateCalibratedTwoViewGeometry(
     const std::vector<Eigen::Vector2d>& points2,
     const FeatureMatches& matches,
     const TwoViewGeometryOptions& options);
+TwoViewGeometry EstimateCalibratedTwoViewGeometryLite(
+    const Camera& camera1,
+    const std::vector<Eigen::Vector2d>& points1,
+    const Camera& camera2,
+    const std::vector<Eigen::Vector2d>& points2,
+    const FeatureMatches& matches,
+    const TwoViewGeometryOptions& options);
 
 // Detect if inlier matches are caused by a watermark.
 // A watermark causes a pure translation in the border are of the image.

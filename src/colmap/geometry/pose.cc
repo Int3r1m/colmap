@@ -153,16 +153,6 @@ Rigid3d InterpolateCameraPoses(const Rigid3d& cam_from_world1,
                  cam_from_world1.translation + translation12 * t);
 }
 
-// namespace {
-
-// double CalculateDepth(const Eigen::Matrix3x4d& cam_from_world,
-//                       const Eigen::Vector3d& point3D) {
-//   const double proj_z = cam_from_world.row(2).dot(point3D.homogeneous());
-//   return proj_z * cam_from_world.col(2).norm();
-// }
-
-// }  // namespace
-
 bool CheckCheirality(const Rigid3d& cam2_from_cam1,
                      const std::vector<Eigen::Vector3d>& points1,
                      const std::vector<Eigen::Vector3d>& points2,

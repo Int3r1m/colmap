@@ -317,6 +317,10 @@ TwoViewGeometry EstimateTwoViewGeometry(
   } else if (camera1.has_prior_focal_length && camera2.has_prior_focal_length) {
     return EstimateCalibratedTwoViewGeometry(
         camera1, points1, camera2, points2, matches, options);
+  } else if (camera1.model_id == CameraModelId::kSpherical &&
+             camera2.model_id == CameraModelId::kSpherical) {
+    return EstimateCalibratedTwoViewGeometryLite(
+        camera1, points1, camera2, points2, matches, options);
   } else {
     return EstimateUncalibratedTwoViewGeometry(
         camera1, points1, camera2, points2, matches, options);
@@ -385,8 +389,9 @@ bool EstimateTwoViewGeometryPose(const Camera& camera1,
     geometry->tri_angle = 0;
   } else {
     const Eigen::Vector3d proj_center1 = Eigen::Vector3d::Zero();
-    const Eigen::Vector3d proj_center2 = geometry->cam2_from_cam1.rotation.inverse() *
-                                         -geometry->cam2_from_cam1.translation;
+    const Eigen::Vector3d proj_center2 =
+        geometry->cam2_from_cam1.rotation.inverse() *
+        -geometry->cam2_from_cam1.translation;
     geometry->tri_angle = Median(
         CalculateTriangulationAngles(proj_center1, proj_center2, points3D));
   }
@@ -551,6 +556,79 @@ TwoViewGeometry EstimateCalibratedTwoViewGeometry(
       EstimateTwoViewGeometryPose(
           camera1, points1, camera2, points2, &geometry);
     }
+  }
+
+  return geometry;
+}
+
+TwoViewGeometry EstimateCalibratedTwoViewGeometryLite(
+    const Camera& camera1,
+    const std::vector<Eigen::Vector2d>& points1,
+    const Camera& camera2,
+    const std::vector<Eigen::Vector2d>& points2,
+    const FeatureMatches& matches,
+    const TwoViewGeometryOptions& options) {
+  THROW_CHECK(options.Check());
+
+  TwoViewGeometry geometry;
+
+  const size_t min_num_inliers = static_cast<size_t>(options.min_num_inliers);
+  if (matches.size() < min_num_inliers) {
+    geometry.config = TwoViewGeometry::ConfigurationType::DEGENERATE;
+    return geometry;
+  }
+
+  // Extract corresponding points.
+
+  std::vector<Eigen::Vector2d> matched_points1(matches.size());
+  std::vector<Eigen::Vector2d> matched_points2(matches.size());
+  std::vector<Eigen::Vector3d> matched_points1_normalized(matches.size());
+  std::vector<Eigen::Vector3d> matched_points2_normalized(matches.size());
+  for (size_t i = 0; i < matches.size(); ++i) {
+    const point2D_t idx1 = matches[i].point2D_idx1;
+    const point2D_t idx2 = matches[i].point2D_idx2;
+    matched_points1[i] = points1[idx1];
+    matched_points2[i] = points2[idx2];
+    matched_points1_normalized[i] = camera1.CamFromImg(points1[idx1]);
+    matched_points2_normalized[i] = camera2.CamFromImg(points2[idx2]);
+  }
+
+  // Estimate epipolar models.
+
+  auto E_ransac_options = options.ransac_options;
+  E_ransac_options.max_error =
+      (camera1.CamFromImgThreshold(options.ransac_options.max_error) +
+       camera2.CamFromImgThreshold(options.ransac_options.max_error)) /
+      2;
+
+  LORANSAC<EssentialMatrixFivePointEstimator, EssentialMatrixFivePointEstimator>
+      E_ransac(E_ransac_options);
+  const auto E_report =
+      E_ransac.Estimate(matched_points1_normalized, matched_points2_normalized);
+  geometry.E = E_report.model;
+
+  if ((!E_report.success) || (E_report.support.num_inliers < min_num_inliers)) {
+    geometry.config = TwoViewGeometry::ConfigurationType::DEGENERATE;
+    return geometry;
+  }
+
+  geometry.config = TwoViewGeometry::ConfigurationType::CALIBRATED;
+
+  geometry.inlier_matches = ExtractInlierMatches(
+      matches, E_report.support.num_inliers, E_report.inlier_mask);
+
+  if (options.detect_watermark && DetectWatermark(camera1,
+                                                  matched_points1,
+                                                  camera2,
+                                                  matched_points2,
+                                                  E_report.support.num_inliers,
+                                                  E_report.inlier_mask,
+                                                  options)) {
+    geometry.config = TwoViewGeometry::ConfigurationType::WATERMARK;
+  }
+
+  if (options.compute_relative_pose) {
+    EstimateTwoViewGeometryPose(camera1, points1, camera2, points2, &geometry);
   }
 
   return geometry;
