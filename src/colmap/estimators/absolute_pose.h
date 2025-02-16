@@ -41,7 +41,7 @@ namespace colmap {
 
 class P3PEstimator {
  public:
-  // The 2D image feature observations.
+  // The observed 2D features in the camera frame.
   typedef Eigen::Vector3d X_t;
   // The observed 3D features in the world frame.
   typedef Eigen::Vector3d Y_t;
@@ -54,7 +54,7 @@ class P3PEstimator {
   // Estimate the most probable solution of the P3P problem from a set of
   // three 2D-3D point correspondences.
   //
-  // @param points2D   Normalized 2D image points as 3x2 matrix.
+  // @param points2D   Normalized 2D image points as 3x3 matrix.
   // @param points3D   3D world points as 3x3 matrix.
   //
   // @return           Most probable pose as length-1 vector of a 3x4 matrix.
@@ -65,7 +65,7 @@ class P3PEstimator {
   // Calculate the squared reprojection error given a set of 2D-3D point
   // correspondences and a projection matrix.
   //
-  // @param points2D        Normalized 2D image points as Nx2 matrix.
+  // @param points2D        Normalized 2D image points as Nx3 matrix.
   // @param points3D        3D world points as Nx3 matrix.
   // @param cam_from_world  3x4 projection matrix.
   // @param residuals       Output vector of residuals.
